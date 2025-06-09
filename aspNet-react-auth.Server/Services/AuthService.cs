@@ -22,7 +22,7 @@ namespace aspNet_react_auth.Server.Services
             }
 
             var passwordVerificationResult = new PasswordHasher<User>()
-                .VerifyHashedPassword(user, user.PasswordHash, request.PasswordHash);
+                .VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
             if (passwordVerificationResult == PasswordVerificationResult.Failed)
             {
@@ -43,7 +43,7 @@ namespace aspNet_react_auth.Server.Services
 
             var user = new User();
             var hashedPassword = new PasswordHasher<User>()
-                .HashPassword(user, request.PasswordHash);
+                .HashPassword(user, request.Password);
             user.Username = request.Username
                 .ToLower()
                 .Trim();
@@ -93,6 +93,11 @@ namespace aspNet_react_auth.Server.Services
 
         private async Task<TokenResponseDto> CreateTokenResponse(User? user) // Creates a JWT token for the user
         {
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user), "User cannot be null.");
+            }
+
             return new TokenResponseDto
             {
                 AccessToken = CreateToken(user),
@@ -124,9 +129,13 @@ namespace aspNet_react_auth.Server.Services
 
         private string CreateToken(User user) // Creates a JWT token for the user
         {
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user), "User cannot be null.");
+            }
+
             // Create claims for the user (e.g., username, roles)
             var claims = new List<Claim>
-            // {} = a collection of claims that will be included in the JWT token
             {
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),

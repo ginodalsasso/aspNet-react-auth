@@ -17,6 +17,19 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// authorize Client and Server communication
+var clientAddress = "aspnet-react-chat.client";
+builder.Services.AddCors(option =>
+{
+    option.AddPolicy(clientAddress, builder =>
+    {
+        builder.WithOrigins("https://localhost:24233") // client address
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -52,6 +65,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseCors(clientAddress);
 
 app.MapControllers();
 

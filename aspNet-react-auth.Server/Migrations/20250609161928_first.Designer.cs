@@ -13,7 +13,7 @@ namespace aspNet_react_auth.Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20250609161928_first")]
-    partial class first
+    partial class First
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
