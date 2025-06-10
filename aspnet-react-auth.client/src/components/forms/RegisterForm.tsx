@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import FormErrorMessage from './FormErrorMessage';
+import FormErrorMessage from '../ui/FormErrorMessage';
 
 type FormData = {
     username: string;
@@ -93,8 +93,6 @@ export default function RegisterForm() {
 
     return (
         <div>
-            <h1>Register</h1>
-
             {message && (
                 <div>
                     {message}
