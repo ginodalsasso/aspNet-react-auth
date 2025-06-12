@@ -11,7 +11,7 @@ type Errors = {
     password?: string;
 };
 
-export default function RegisterForm() {
+export default function LoginForm() {
     const [formData, setFormData] = useState<FormData>({
         username: '',
         password: ''
@@ -21,45 +21,29 @@ export default function RegisterForm() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>('');
 
-
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         // Destructure name and value from the event target avoid repetition
         const { name, value } = e.target;
         // 
         setFormData(prev => ({
             ...prev,
-            [name]: value 
+            [name]: value
         }));
     };
-
-    const validateForm = (): boolean => {
-        const newErrors: Errors = {};
-        // Provisory 
-        if (!formData.username.trim()) {
-            newErrors.username = 'Username is needed';
-        }
-
-        if (!formData.password.trim()) {
-            newErrors.password = 'Password is needed';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0; 
-    }
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if (!validateForm()) {
-            return;
-        }
+        //if (!validateForm()) {
+        //    return;
+        //}
 
         setIsLoading(true);
         setMessage('');
         setErrors({});
 
         try {
-            const response = await fetch('https://localhost:7067/api/Auth/register', {
+            const response = await fetch('https://localhost:7067/api/Auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,7 +62,7 @@ export default function RegisterForm() {
                 return;
             }
 
-            setMessage('Registration successful! You can now log in.');
+            setMessage('Login successful! You can now log in.');
             setFormData({
                 username: '',
                 password: ''
@@ -90,6 +74,7 @@ export default function RegisterForm() {
             setIsLoading(false);
         }
     };
+
 
     return (
         <div>
@@ -130,7 +115,7 @@ export default function RegisterForm() {
                 </div>
 
                 <button type="submit" disabled={isLoading}>
-                    {isLoading ? 'Loading' : 'Register'}
+                    {isLoading ? ' Loading...' : 'Login'}
                 </button>
             </form>
         </div>
