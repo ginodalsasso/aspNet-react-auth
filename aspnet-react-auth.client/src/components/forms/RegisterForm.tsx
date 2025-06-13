@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import FormErrorMessage from '../ui/FormErrorMessage';
+import handleApiResponse from '../../lib/utils/handleApiResponse';
 
 type FormData = {
     username: string;
@@ -21,20 +22,24 @@ export default function RegisterForm() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>('');
 
-
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        // Destructure name and value from the event target avoid repetition
         const { name, value } = e.target;
-        // 
         setFormData(prev => ({
             ...prev,
-            [name]: value 
+            [name]: value
         }));
+
+        if (errors[name as keyof Errors]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: undefined
+            }));
+        }
     };
 
     const validateForm = (): boolean => {
         const newErrors: Errors = {};
-        // Provisory 
+
         if (!formData.username.trim()) {
             newErrors.username = 'Username is needed';
         }
@@ -44,7 +49,7 @@ export default function RegisterForm() {
         }
 
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0; 
+        return Object.keys(newErrors).length === 0;
     }
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -70,19 +75,14 @@ export default function RegisterForm() {
                 }),
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                const errorMessage = data.message || `Error ${response.status}`;
-                setMessage(errorMessage);
-                return;
-            }
-
-            setMessage('Registration successful! You can now log in.');
-            setFormData({
-                username: '',
-                password: ''
+            handleApiResponse(['username', 'password'], response, setErrors, setMessage, () => {
+                setMessage('Registration successful! You can now log in.');
+                setFormData({
+                    username: '',
+                    password: ''
+                });
             });
+
         } catch (error) {
             console.error('Network error:', error);
             setMessage('Internal server error');
@@ -112,7 +112,6 @@ export default function RegisterForm() {
                         placeholder="Enter your username"
                     />
                     <FormErrorMessage message={errors?.username} />
-
                 </div>
 
                 <div>

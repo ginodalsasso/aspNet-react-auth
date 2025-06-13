@@ -15,13 +15,19 @@ namespace aspNet_react_auth.Server.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState); // renvoie les erreurs de validation au client
+                var validationErrors = new ValidationErrorResponse(ModelState);
+                return BadRequest(validationErrors); // Return validation errors if the model state is invalid
             }
 
             var user = await authService.RegisterAsync(request);
             if (user is null)
             {
-                return BadRequest("User already exists");
+                var error = new ErrorResponse
+                {
+                    Message = "Registration failed",
+                    Details = "A user with this username already exists"
+                };
+                return BadRequest(error);
             }
 
             return Ok(user);
@@ -33,8 +39,12 @@ namespace aspNet_react_auth.Server.Controllers
             var result = await authService.LoginAsync(request);
             if (result is null)
             {
-                return BadRequest("Invalid username or password");
-            }
+                var error = new ErrorResponse
+                {
+                    Message = "Login failed",
+                    Details = "Invalid username or password"
+                };
+                return BadRequest(error);            }
             return Ok(result);
         }
 
