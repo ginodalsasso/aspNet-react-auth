@@ -6,7 +6,12 @@ import type {
     RefreshTokenRequest,
 } from '../lib/types/auth';
 
+
 export class AuthService {
+     
+    private responseError(message: string = "Network error. Please check your connection.", status: number = 500) {
+        return new Response(JSON.stringify({ message }), { status, statusText: 'Network Error' });
+    }
 
     // Login method to authenticate user
     async login(username: string, password: string): Promise<Response> {
@@ -27,10 +32,7 @@ export class AuthService {
             return response;
         } catch (error) {
             console.error('Login error:', error);
-            return new Response(
-                JSON.stringify({ message: 'Network error. Please check your connection.' }),
-                { status: 500, statusText: 'Network Error' }
-            );
+            return this.responseError();
         }
     }
 
@@ -52,10 +54,7 @@ export class AuthService {
             return response;
         } catch (error) {
             console.error('Registration error:', error);
-            return new Response(
-                JSON.stringify({ message: 'Network error. Please check your connection.' }),
-                { status: 500, statusText: 'Network Error' }
-            );
+            return this.responseError();
         }
     }
 
@@ -100,10 +99,7 @@ export class AuthService {
             return response;
         } catch (error) {
             console.error('Refresh token error:', error);
-            return new Response(
-                JSON.stringify({ message: 'Network error. Please check your connection.' }),
-                { status: 500, statusText: 'Network Error' }
-            );
+            return this.responseError();
         }
     }
 
@@ -112,21 +108,18 @@ export class AuthService {
             const response = await fetch(`${API_ROUTES.auth.testProtectedRoute}`, {
                 method: 'GET',
                 headers: {
-                    'Authorisation': `Bearer ${accessToken}`
+                    'Authorization': `Bearer ${accessToken}`
                 },
             });
 
             return response;
         } catch (error) {
             console.error('Protected route access error:', error);
-            return new Response(
-                JSON.stringify({ message: 'Network error. Please check your connection.' }),
-                { status: 500, statusText: 'Network Error' }
-            );
+            return this.responseError();
         }
     }
 
-    async textAdminRoute(accessToken: string): Promise<Response> {
+    async testAdminRoute(accessToken: string): Promise<Response> {
         try {
             const response = await fetch(`${API_ROUTES.auth.testAdminRoute}`, {
                 method: 'GET',
@@ -138,10 +131,7 @@ export class AuthService {
             return response;
         } catch (error) {
             console.error('Admin route access error:', error);
-            return new Response(
-                JSON.stringify({ message: 'Network error. Please check your connection.' }),
-                { status: 500, statusText: 'Network Error' }
-            );
+            return this.responseError();
         }
     }
 }
