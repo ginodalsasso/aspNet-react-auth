@@ -137,9 +137,9 @@ namespace aspNet_react_auth.Server.Services
             // Create claims for the user (e.g., username, roles)
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Role, user.Role),
+                new Claim("userId", user.Id.ToString()),
+                new Claim("username", user.Username),
+                new Claim("role", user.Role),
             };
 
             // Create a symmetric security key using the secret key from configuration

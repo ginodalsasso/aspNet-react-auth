@@ -6,15 +6,21 @@ export interface User {
     exp: number;
 }
 
+// Error types
+export interface LoginError {
+    username?: string;
+    password?: string;
+}
+
 // API Request types
 export interface LoginRequest {
     username: string;
-    passwordHash: string;
+    password: string;
 }
 
 export interface RegisterRequest {
     username: string;
-    passwordHash: string;
+    password: string;
 }
 
 export interface LogoutRequest {
@@ -51,18 +57,6 @@ export interface ApiErrorResponse {
 
 export type ApiResult<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
-// Auth Context types
-export interface AuthContextType {
-    user: User | null;
-    accessToken: string | null;
-    refreshToken: string | null;
-    loading: boolean;
-    isAuthenticated: boolean;
-    login: (username: string, password: string) => Promise<ApiResult<TokenResponse>>;
-    register: (username: string, password: string) => Promise<ApiResult<User>>;
-    logout: () => Promise<void>;
-    refreshAccessToken: () => Promise<TokenResponse | null>;
-}
 
 // Form validation types
 export interface LoginFormData {
@@ -83,18 +77,28 @@ export interface ApiError {
     code?: string;
 }
 
-// HTTP Method types
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+// JWT Token types
+export interface TokenPair {
+    accessToken: string | null;
+    refreshToken: string | null;
+}
 
-// API Request configuration
-export interface ApiRequestConfig {
-    method?: HttpMethod;
-    headers?: Record<string, string>;
-    body?: string;
+export interface JWTPayload {
+    userId: string;
+    username: string;
+    role: string;
+    exp: number;
+    iat?: number;
+    iss?: string;
+    aud?: string;
 }
 
 // Protected route props
 export interface ProtectedRouteProps {
     children: React.ReactNode;
     requiredRole?: string;
+}
+
+export interface AdminRouteProps extends ProtectedRouteProps {
+    requiredRole: 'Admin';
 }

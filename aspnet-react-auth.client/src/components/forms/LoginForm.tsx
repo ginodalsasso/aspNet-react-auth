@@ -1,28 +1,21 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import FormErrorMessage from '../ui/FormErrorMessage';
-import type { TokenResponse, User } from '../../lib/types/auth';
-
-type FormData = {
-    username: string;
-    password: string;
-};
-
-type Errors = {
-    username?: string;
-    password?: string;
-};
+import type { LoginError, LoginFormData, TokenResponse, User } from '../../lib/types/auth';
+import { authService } from '../../services/authService';
+import handleApiResponse from '../../lib/utils/handleApiResponse';
+import { parseJWT, saveTokens } from '../../lib/utils/jwtUtils';
 
 interface LoginFormProps {
     onLoginSuccess?: (user: User, tokens: TokenResponse) => void;
 }
 
 export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
-    const [formData, setFormData] = useState<FormData>({
+    const [formData, setFormData] = useState<LoginFormData>({
         username: '',
         password: ''
     });
 
-    const [errors, setErrors] = useState<Errors>({});
+    const [errors, setErrors] = useState<LoginError>({});
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>('');
 
@@ -48,30 +41,34 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
         setErrors({});
 
         try {
-            const response = await fetch('https://localhost:7067/api/Auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: formData.username,
-                    password: formData.password
-                }),
-            });
+            const response = await authService.login(formData.username, formData.password);
 
-            const data = await response.json();
+            await handleApiResponse<TokenResponse>(
+                ['username', 'password'], // Fields to check for backend errors
+                response,
+                setErrors,
+                setMessage,
+                (tokenData) => {
+                    // Success handler
+                    const user = parseJWT(tokenData.accessToken);
 
-            if (!response.ok) {
-                const errorMessage = data.message || `Error ${response.status}`;
-                setMessage(errorMessage);
-                return;
-            }
+                    if (user) {
+                        // Save tokens to localStorage
+                        saveTokens(tokenData.accessToken, tokenData.refreshToken);
 
-            setMessage('Login successful! You can now log in.');
-            setFormData({
-                username: '',
-                password: ''
-            });
+                        setMessage('Login successful!');
+                        setFormData({
+                            username: '',
+                            password: ''
+                        });
+
+                        // On successful login, call the callback with user and token data
+                        onLoginSuccess?.(user, tokenData);
+                    } else {
+                        setMessage('Error processing login response');
+                    }
+                }
+            );
         } catch (error) {
             console.error('Network error:', error);
             setMessage('Internal server error');

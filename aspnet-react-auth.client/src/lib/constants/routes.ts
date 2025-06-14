@@ -1,19 +1,23 @@
 
-const devURL = "https://localhost:7067/";
+const devURL = "https://localhost:7067";
 const prodURL = ""
 const API_BASE_URL = devURL ? devURL : prodURL; // if devURL is set, use it; otherwise use prodURL
 
-export const BASE_URL = `${API_BASE_URL}/api`;
 export const API_URL = `${API_BASE_URL}`;
+export const BASE_URL = `${API_BASE_URL}/api`;
 
 
 const authBase = `${BASE_URL}/Auth`;
 
 const authRoutes = {
-    Login: `${authBase}/login`,
-    Register: `${authBase}/register`,
-    Logout: `${authBase}/logout`,
-    RefreshToken: `${authBase}/refresh-token`,
+    login: `${authBase}/login`,
+    register: `${authBase}/register`,
+    logout: `${authBase}/logout`,
+    refreshToken: `${authBase}/refresh-token`,
+
+    // test
+    testProtectedRoute: `${authBase}/test-protected-route`,
+    testAdminRoute: `${authBase}/test-admin-route`,
 }
 
 const API_ROUTES = {
