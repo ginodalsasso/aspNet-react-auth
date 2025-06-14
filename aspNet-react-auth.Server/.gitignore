@@ -363,3 +363,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# keys folder
+**/Keys/
+Keys/
+aspNet-react-auth.Server/Keys/

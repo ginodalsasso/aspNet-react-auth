@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using System.Security.Cryptography;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +34,18 @@ builder.Services.AddCors(option =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+var rsa = RSA.Create();
+var privateKeyPath = Path.Combine(builder.Environment.ContentRootPath, "Keys", "private_key.pem");
+
+if (File.Exists(privateKeyPath))
+{
+    var privateKeyPem = File.ReadAllText(privateKeyPath);
+    rsa.ImportFromPem(privateKeyPem);
+}
+else
+{
+    throw new FileNotFoundException($"Key is not found : {privateKeyPath}");
+}
 // Add Identity services 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -45,10 +58,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["AppSettings:Audience"],
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["AppSettings:Token"]!)),
+            IssuerSigningKey = new RsaSecurityKey(rsa),
+            ValidAlgorithms = new[] { SecurityAlgorithms.RsaSha256 }
         };
     });
+
+// Add singleton RSA key for signing JWT tokens
+builder.Services.AddSingleton(rsa);
 
 // Register the AuthService
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -63,6 +79,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

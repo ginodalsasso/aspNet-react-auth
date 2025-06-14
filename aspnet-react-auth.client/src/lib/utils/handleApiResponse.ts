@@ -48,7 +48,8 @@ export default async function handleApiResponse<T>(
                     getBackendErrorMessage(inputs, data.errors, setErrors);
                 } else {
                     setMessage(generalErrorMessage);
-                }                break;
+                }
+                break;
             case 403:
                 setMessage("Access denied. You don't have the necessary permissions.");
                 break;

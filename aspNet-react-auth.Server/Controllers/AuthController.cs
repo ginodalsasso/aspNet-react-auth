@@ -55,7 +55,12 @@ namespace aspNet_react_auth.Server.Controllers
             var result = await authService.LogoutAsync(request);
             if (result is false)
             {
-                return Unauthorized("Invalid logout request");
+                var error = new ErrorResponse
+                {
+                    Message = "Logout failed",
+                    Details = "Invalid logout request"
+                };
+                return Unauthorized(error);
             }
 
             return Ok(new { message = "Logged out successfully" });

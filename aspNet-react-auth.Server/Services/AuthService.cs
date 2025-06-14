@@ -11,7 +11,7 @@ using System.Text;
 
 namespace aspNet_react_auth.Server.Services
 {
-    public class AuthService(AppDbContext context, IConfiguration configuration) : IAuthService
+    public class AuthService(AppDbContext context, IConfiguration configuration, RSA rsa) : IAuthService
     {
         public async Task<TokenResponseDto?> LoginAsync(UserDto request) // Authenticates the user and returns a JWT token
         {
@@ -143,11 +143,9 @@ namespace aspNet_react_auth.Server.Services
             };
 
             // Create a symmetric security key using the secret key from configuration
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!)
-                );
+            var key = new RsaSecurityKey(rsa);
 
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
             var tokenDescriptor = new JwtSecurityToken(
                 issuer: configuration.GetValue<string>("AppSettings:Issuer"),       // Issuer = the entity that issues the token

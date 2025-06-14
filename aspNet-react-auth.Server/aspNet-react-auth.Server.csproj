@@ -32,4 +32,8 @@
     </ProjectReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Keys\" />
+  </ItemGroup>
+
 </Project>
