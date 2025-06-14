@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import FormErrorMessage from '../ui/FormErrorMessage';
+import type { TokenResponse, User } from '../../lib/types/auth';
 
 type FormData = {
     username: string;
@@ -11,7 +12,11 @@ type Errors = {
     password?: string;
 };
 
-export default function LoginForm() {
+interface LoginFormProps {
+    onLoginSuccess?: (user: User, tokens: TokenResponse) => void;
+}
+
+export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     const [formData, setFormData] = useState<FormData>({
         username: '',
         password: ''
