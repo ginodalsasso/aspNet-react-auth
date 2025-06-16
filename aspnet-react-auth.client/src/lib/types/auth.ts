@@ -11,6 +11,10 @@ export interface LoginError {
     username?: string;
     password?: string;
 }
+export interface RegisterError {
+    username?: string;
+    password?: string;
+}
 
 // API Request types
 export interface LoginRequest {
@@ -39,6 +43,10 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
+export interface RegisterResponse {
+    message: string;
+}
+
 export interface ApiResponse<T> {
     success: boolean;
     data?: T;
@@ -55,7 +63,6 @@ export interface ApiErrorResponse {
     error: string;
 }
 
-export type ApiResult<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 
 // Form validation types
@@ -67,7 +74,7 @@ export interface LoginFormData {
 export interface RegisterFormData {
     username: string;
     password: string;
-    confirmPassword: string;
+    //confirmPassword: string;
 }
 
 //API Error types

@@ -30,7 +30,7 @@ namespace aspNet_react_auth.Server.Controllers
                 return BadRequest(error);
             }
 
-            return Ok(user);
+            return Ok(new { message = "Registration successful" });
         }
 
         [HttpPost("login")]

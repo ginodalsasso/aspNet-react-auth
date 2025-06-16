@@ -32,10 +32,6 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        //if (!validateForm()) {
-        //    return;
-        //}
-
         setIsLoading(true);
         setMessage('');
         setErrors({});
