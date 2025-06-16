@@ -23,7 +23,6 @@ export default function RegisterForm() {
             ...prev,
             [name]: value
         }));
-
     };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -48,7 +47,7 @@ export default function RegisterForm() {
                         password: ''
                     });
                     if (response.ok) {
-                        setTimeout(() => navigate('/login'), 2000); // Redirect after 2 seconds
+                        setTimeout(() => navigate('/login'), 1500); // Redirect after 1.5 seconds
                     }
                 }
             );

@@ -1,23 +1,26 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import FormErrorMessage from '../ui/FormErrorMessage';
-import type { LoginError, LoginFormData, TokenResponse, User } from '../../lib/types/auth';
+import type { LoginError, LoginFormData, TokenResponse } from '../../lib/types/auth';
 import { authService } from '../../services/authService';
 import handleApiResponse from '../../lib/utils/handleApiResponse';
-import { parseJWT, saveTokens } from '../../lib/utils/jwtUtils';
+import { parseJWT } from '../../lib/utils/jwtUtils';
+import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
-interface LoginFormProps {
-    onLoginSuccess?: (user: User, tokens: TokenResponse) => void;
-}
-
-export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
+export default function LoginForm() {
     const [formData, setFormData] = useState<LoginFormData>({
         username: '',
         password: ''
     });
 
+    const navigate = useNavigate();
+
     const [errors, setErrors] = useState<LoginError>({});
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>('');
+
+    // Get auth functions from useAuth to handle login state
+    const { setAuthData } = useAuth();
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         // Destructure name and value from the event target avoid repetition
@@ -50,16 +53,16 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
 
                     if (user) {
                         // Save tokens to localStorage
-                        saveTokens(tokenData.accessToken, tokenData.refreshToken);
-
+                        setAuthData(tokenData.accessToken, tokenData.refreshToken);
                         setMessage('Login successful!');
                         setFormData({
                             username: '',
                             password: ''
                         });
 
-                        // On successful login, call the callback with user and token data
-                        onLoginSuccess?.(user, tokenData);
+                        if (response.ok) {
+                            setTimeout(() => navigate('/'), 1500); // Redirect after 1.5 seconds
+                        }
                     } else {
                         setMessage('Error processing login response');
                     }
