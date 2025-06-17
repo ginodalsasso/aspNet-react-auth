@@ -48,6 +48,8 @@ function App() {
                     <Route path="/register" element={<PublicRoute> <Register /> </PublicRoute>} />
                     <Route path="/login" element={<PublicRoute> <Login /> </PublicRoute>} />
 
+                    <Route path="*" element={<Navigate to="/notFound" replace />} />
+
                     {/* Protected routes that require authentication */  }
                     <Route path="/dashboard" element={<ProtectedRoute> <Dashboard /> </ProtectedRoute>} />
                 </Routes>
