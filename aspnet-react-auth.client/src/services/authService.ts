@@ -119,21 +119,10 @@ export class AuthService {
         }
     }
 
-    async testAdminRoute(accessToken: string): Promise<Response> {
-        try {
-            const response = await fetch(`${API_ROUTES.auth.testAdminRoute}`, {
-                method: 'GET',
-                headers: {
-                    'Authorisation': `Bearer ${accessToken}`
-                },
+    async testAdminRoute(): Promise<Response> {
+        return this.makeAuthenticatedRequest(`${API_ROUTES.auth.testAdminRoute}`, {
+            method: 'GET'
             });
-
-            return response;
-        } catch (error) {
-            console.error('Admin route access error:', error);
-            return this.responseError();
-        }
-    }
 }
 
 export const authService = new AuthService(); // Exporting an instance of AuthService for use in components or hooks
