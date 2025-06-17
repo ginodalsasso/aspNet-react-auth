@@ -2,6 +2,7 @@ import { useState, useEffect, type ReactNode } from 'react';
 import type { AuthContextType, User } from '../lib/types/auth';
 import { getStoredTokens, parseJWT, clearStoredTokens, saveTokens } from '../lib/utils/jwtUtils';
 import { AuthContext } from './AuthContext';
+import { authService } from '../services/authService';
 
 export interface AuthProviderProps {
     children: ReactNode;  // All child components that will have access to auth
@@ -55,13 +56,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     // Function to logout a user, clears everything
-    const clearAuth = () => {
-        setUser(null);
-        setAccessToken(null);
-        setRefreshToken(null);
+    const clearAuth = async () => {
+        try {
+            if (user?.id && refreshToken && accessToken) {
+                const response = await authService.logout(user.id, refreshToken, accessToken);
+                if (!response) {
+                    console.error('Logout API failed');
+                }
+            }
+        } catch (error) {
+            console.error('Error during logout:', error);
+        } finally {
+            // Toujours nettoyer, même en cas d'erreur
+            setUser(null);
+            setAccessToken(null);
+            setRefreshToken(null);
 
-        // Clear tokens from localStorage
-        clearStoredTokens();
+            // Clear tokens from localStorage
+            clearStoredTokens();
+        }
     };
 
     // The value object that will be provided to all child components
