@@ -6,10 +6,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace aspNet_react_auth.Server.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController(IAuthService authService) : ControllerBase
     {
+        [Authorize]
+        [HttpGet("test-protected-route")]
+        public IActionResult TestProtectedRoute()
+        {
+            return Ok("You're Authenticated!");
+        }
+
         [HttpPost("register")]
         public async Task<ActionResult<User>> Register(UserDto request) // Registers a new user and returns the user object
         {

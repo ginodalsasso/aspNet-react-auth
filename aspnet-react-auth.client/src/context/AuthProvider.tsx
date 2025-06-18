@@ -39,6 +39,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(false);
     }, []);
 
+
     // Function to login a user, called after successful API login
     const setAuthData = (newAccessToken: string, newRefreshToken: string) => {
         // Extract user info from the new access token
@@ -76,6 +77,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             clearStoredTokens();
         }
     };
+
+    // Set auth callbacks for the authService to manage tokens and user state
+    useEffect(() => {
+        authService.setAuthCallbacks({
+            getTokens: () => ({
+                accessToken,
+                refreshToken,
+                userId: user?.id || null
+            }),
+            updateTokens: setAuthData,
+            logout: clearAuth
+        });
+    }, [accessToken, refreshToken, user]);
 
     // The value object that will be provided to all child components
     const value: AuthContextType = {

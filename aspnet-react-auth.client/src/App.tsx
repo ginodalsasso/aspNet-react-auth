@@ -7,6 +7,7 @@ import {
 
 import Register from './pages/Register'
 import Login from './pages/Login';
+import NotFound from './pages/NotFound';
 import { AuthProvider } from './context/AuthProvider';
 import { useAuth } from './hooks/useAuth';
 import Dashboard from './pages/Dashboard';
@@ -48,10 +49,13 @@ function App() {
                     <Route path="/register" element={<PublicRoute> <Register /> </PublicRoute>} />
                     <Route path="/login" element={<PublicRoute> <Login /> </PublicRoute>} />
 
-                    <Route path="*" element={<Navigate to="/notFound" replace />} />
 
                     {/* Protected routes that require authentication */  }
                     <Route path="/dashboard" element={<ProtectedRoute> <Dashboard /> </ProtectedRoute>} />
+
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    {/* Catch-all route for 404 Not Found */}
+                    <Route path="*" element={ <NotFound /> } />
                 </Routes>
             </Router>
         </AuthProvider>
