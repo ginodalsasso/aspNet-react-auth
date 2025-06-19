@@ -1,9 +1,8 @@
 import { useState, useEffect, type ReactNode } from 'react';
-import type { AuthContextType, User } from '../lib/types/auth';
-import { getStoredTokens, parseJWT, clearStoredTokens, saveTokens } from '../lib/utils/jwtUtils';
-import { AuthContext } from './AuthContext';
+import type { User, AuthContextType } from '../lib/types/auth';
+import { parseJWT } from '../lib/utils/jwtUtils';
 import { authService } from '../services/authService';
-
+import { AuthContext } from './AuthContext';
 export interface AuthProviderProps {
     children: ReactNode;  // All child components that will have access to auth
 }
@@ -11,93 +10,72 @@ export interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const [user, setUser] = useState<User | null>(null);
-    const [accessToken, setAccessToken] = useState<string | null>(null);
-    const [refreshToken, setRefreshToken] = useState<string | null>(null);
+    const [accessToken, setAccessTokenState] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // check if user was previously logged in
     useEffect(() => {
-        // get stored tokens from localStorage
-        const tokens = getStoredTokens();
+        const initializeAuth = async () => {
+            try {
+                const response = await authService.refreshToken();
 
-        // If we found both tokens in storage
-        if (tokens.accessToken && tokens.refreshToken) {
-            // Try to extract user info from the access token
-            const userData = parseJWT(tokens.accessToken);
+                if (response.ok) {
+                    const data = await response.json();
+                    setAccessToken(data.accessToken);
 
-            if (userData) {
-                // Token is valid, restore the user session
-                setUser(userData);
-                setAccessToken(tokens.accessToken);
-                setRefreshToken(tokens.refreshToken);
-            } else {
-                // Token is invalid, clear it from storage
-                clearStoredTokens();
+                    const userData = parseJWT(data.accessToken);
+                    if (userData) {
+                        setUser(userData);
+                    }
+                }
+            } catch (error) {
+                console.error('No existing session found', error);
+            } finally {
+                setLoading(false);
             }
-        }
+        };
 
-        setLoading(false);
+        initializeAuth();
     }, []);
 
 
-    // Function to login a user, called after successful API login
-    const setAuthData = (newAccessToken: string, newRefreshToken: string) => {
-        // Extract user info from the new access token
+    const setAccessToken = (newAccessToken: string) => {
         const userData = parseJWT(newAccessToken);
-
         if (userData) {
-            // Update all auth state
             setUser(userData);
-            setAccessToken(newAccessToken);
-            setRefreshToken(newRefreshToken);
-
-            // Save tokens to localStorage for persistence
-            saveTokens(newAccessToken, newRefreshToken);
+            setAccessTokenState(newAccessToken);
         }
     };
 
     // Function to logout a user, clears everything
     const clearAuth = async () => {
         try {
-            if (user?.id && refreshToken && accessToken) {
-                const response = await authService.logout(user.id, refreshToken, accessToken);
-                if (!response) {
-                    console.error('Logout API failed');
-                }
+            if (accessToken) {
+                await authService.logout();
             }
         } catch (error) {
             console.error('Error during logout:', error);
         } finally {
             // Toujours nettoyer, même en cas d'erreur
             setUser(null);
-            setAccessToken(null);
-            setRefreshToken(null);
-
-            // Clear tokens from localStorage
-            clearStoredTokens();
+            setAccessTokenState(null);
         }
     };
 
     // Set auth callbacks for the authService to manage tokens and user state
     useEffect(() => {
         authService.setAuthCallbacks({
-            getTokens: () => ({
-                accessToken,
-                refreshToken,
-                userId: user?.id || null
-            }),
-            updateTokens: setAuthData,
+            getAccessToken: () => accessToken,
+            updateAccessToken: setAccessToken,
             logout: clearAuth
         });
-    }, [accessToken, refreshToken, user]);
+    }, [accessToken]);
 
     // The value object that will be provided to all child components
     const value: AuthContextType = {
         user,
         accessToken,
-        refreshToken,
         loading,
-        setAuthData,
+        setAccessToken,
         clearAuth,
     };
 

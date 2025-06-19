@@ -2,14 +2,11 @@
 import type {
     LoginRequest,
     RegisterRequest,
-    LogoutRequest,
-    RefreshTokenRequest,
-    TokenResponse,
 } from '../lib/types/auth';
 
 interface AuthCallbacks {
-    getTokens: () => { accessToken: string | null; refreshToken: string | null; userId: string | null };
-    updateTokens: (accessToken: string, refreshToken: string) => void;
+    getAccessToken: () => string | null;
+    updateAccessToken: (accessToken: string) => void;
     logout: () => void;
 }
 
@@ -33,8 +30,8 @@ export class AuthService {
             return this.responseError('Auth service not properly configured', 500);
         }
 
-        const { getTokens, updateTokens, logout } = this.authCallbacks;
-        const { accessToken, refreshToken, userId } = getTokens();
+        const { getAccessToken, updateAccessToken, logout } = this.authCallbacks;
+        const accessToken = getAccessToken();
 
         if (!accessToken) {
             return this.responseError('No access token available', 401);
@@ -43,6 +40,7 @@ export class AuthService {
         // add Authorization header to options
         const authenticatedOptions: RequestInit = {
             ...options,
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers,
@@ -55,22 +53,23 @@ export class AuthService {
             let response = await fetch(url, authenticatedOptions);
 
             // If error status is 401 (Unauthorized), attempt to refresh token
-            if (response.status === 401 && refreshToken && userId) {
+            if (response.status === 401) {
                 console.log('Attempting refresh...');
 
-                const refreshResponse = await this.refreshToken(userId, refreshToken);
+                const refreshResponse = await this.refreshToken();
 
                 if (refreshResponse.ok) {
-                    const newTokens: TokenResponse = await refreshResponse.json(); // get new tokens from response
-
-                    updateTokens(newTokens.accessToken, newTokens.refreshToken); // update tokens in context
+                    const newTokenData = await refreshResponse.json(); // get new tokens from response
+                    
+                    updateAccessToken(newTokenData.accessToken); // update tokens in context
 
                     const retryOptions: RequestInit = { // RequestInit for retrying the request
                         ...options,
+                        credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
                             ...options.headers,
-                            'Authorization': `Bearer ${newTokens.accessToken}`
+                            'Authorization': `Bearer ${newTokenData.accessToken}`
                         }
                     };
 
@@ -98,8 +97,9 @@ export class AuthService {
         };
 
         try {
-            const response = await fetch(`https://localhost:7067/api/Auth/login`, {
+            const response = await fetch(API_ROUTES.auth.login, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -135,20 +135,10 @@ export class AuthService {
         }
     }
 
-    async logout(userId: string, refreshToken: string, accessToken: string): Promise<boolean> {
+    async logout(): Promise<boolean> {
         try {
-            const logoutData: LogoutRequest = {
-                userId,
-                refreshToken
-            };
-
-            const response = await fetch(`${API_ROUTES.auth.logout}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: JSON.stringify(logoutData),
+            const response = await this.makeAuthenticatedRequest(API_ROUTES.auth.logout, {
+                method: 'POST'
             });
 
             return response.ok;
@@ -158,21 +148,15 @@ export class AuthService {
         }
     }
 
-    async refreshToken(userId: string, refreshToken: string): Promise<Response> {
-        const refreshData: RefreshTokenRequest = {
-            userId,
-            refreshToken
-        };
-
+    async refreshToken(): Promise<Response> {
         try {
-            const response = await fetch(`${API_ROUTES.auth.refreshToken}`, {
+            const response = await fetch(API_ROUTES.auth.refreshToken, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(refreshData),
             });
-
             return response;
         } catch (error) {
             console.error('Refresh token error:', error);

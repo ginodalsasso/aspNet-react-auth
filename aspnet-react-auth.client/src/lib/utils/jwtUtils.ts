@@ -1,4 +1,4 @@
-﻿import type { JWTPayload, TokenPair, User } from "../types/auth";
+﻿import type { JWTPayload, User } from "../types/auth";
 
 // Function to decode a JWT on the client side (without signature verification)
 export const parseJWT = (token: string): User | null => {
@@ -43,24 +43,4 @@ export const isTokenExpired = (token: string): boolean => {
         console.error('Error checking token expiration:', error);
         return true; // In case of error, consider as expired
     }
-};
-
-// Function to save tokens in localStorage
-export const saveTokens = (accessToken: string, refreshToken: string): void => {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-};
-
-// Function to retrieve tokens from localStorage
-export const getStoredTokens = (): TokenPair => {
-    return {
-        accessToken: localStorage.getItem('accessToken'),
-        refreshToken: localStorage.getItem('refreshToken')
-    };
-};
-
-// Function to remove tokens from localStorage
-export const clearStoredTokens = (): void => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
 };

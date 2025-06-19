@@ -70,9 +70,12 @@ namespace aspNet_react_auth.Server.Services
             return true;
         }
 
-        public async Task<TokenResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto request) // Creates a JWT token for the user using a refresh token
+        public async Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken) // Creates a JWT token for the user using a refresh token
         {
-            var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
+            //var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
+            var user = await context.Users.FirstOrDefaultAsync(u =>
+                u.RefreshToken == refreshToken &&
+                u.RefreshTokenExpiryTime > DateTime.UtcNow);
             if (user is null)
             {
                 return null;
@@ -81,15 +84,6 @@ namespace aspNet_react_auth.Server.Services
             return await CreateTokenResponse(user);
         }
 
-        private async Task<User?> ValidateRefreshTokenAsync(Guid userId, string refreshToken) // Validates the refresh token for the user
-        {
-            var user = await context.Users.FindAsync(userId);
-            if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-            {
-                return null; // Invalid or expired refresh token
-            }
-            return user;
-        }
 
         private async Task<TokenResponseDto> CreateTokenResponse(User? user) // Creates a JWT token for the user
         {
@@ -105,19 +99,31 @@ namespace aspNet_react_auth.Server.Services
             };
         }
 
-        private string GenerateRefreshToken() // Generates a secure random refresh token
+        private string GenerateRefreshToken(User user) // Generates a secure random refresh token
         {
-            var randomBytes = new byte[32]; // 32 bytes = 256 bits
-            using (var rng = RandomNumberGenerator.Create())
+            var claims = new List<Claim>
             {
-                rng.GetBytes(randomBytes);
-            }
-            return Convert.ToBase64String(randomBytes); // Convert to Base64 string for storage
+                new Claim("userId", user.Id.ToString()),
+                new Claim("type", "refresh"),
+            };
+
+            var key = new RsaSecurityKey(rsa);
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
+
+            var refreshTokenDescriptor = new JwtSecurityToken(
+                issuer: configuration.GetValue<string>("AppSettings:Issuer"),
+                audience: configuration.GetValue<string>("AppSettings:Audience"),
+                claims: claims,
+                expires: DateTime.UtcNow.AddDays(7), 
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(refreshTokenDescriptor);
         }
 
         private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
         {
-            var refreshToken = GenerateRefreshToken();
+            var refreshToken = GenerateRefreshToken(user);
             user.RefreshToken = refreshToken; // Save the refresh token to the user entity
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // 7 days expiry
 

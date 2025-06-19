@@ -113,8 +113,7 @@ export interface AdminRouteProps extends ProtectedRouteProps {
 export interface AuthContextType {
     user: User | null;
     accessToken: string | null;          // JWT access token
-    refreshToken: string | null;         // Refresh token for getting new access tokens
     loading: boolean;                    // Loading state during initialization
-    setAuthData: (accessToken: string, refreshToken: string) => void;  // Function to login user
+    setAccessToken: (accessToken: string) => void; 
     clearAuth: () => void;               // Function to logout user
 }

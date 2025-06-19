@@ -20,7 +20,7 @@ export default function LoginForm() {
     const [message, setMessage] = useState<string>('');
 
     // Get auth functions from useAuth to handle login state
-    const { setAuthData } = useAuth();
+    const { setAccessToken } = useAuth();
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         // Destructure name and value from the event target avoid repetition
@@ -53,7 +53,7 @@ export default function LoginForm() {
 
                     if (user) {
                         // Save tokens to localStorage
-                        setAuthData(tokenData.accessToken, tokenData.refreshToken);
+                        setAccessToken(tokenData.accessToken);
                         setMessage('Login successful!');
                         setFormData({
                             username: '',

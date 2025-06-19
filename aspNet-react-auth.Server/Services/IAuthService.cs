@@ -12,6 +12,6 @@ namespace aspNet_react_auth.Server.Services
         // Logs out the user by invalidating the refresh token
         Task<bool> LogoutAsync(LogoutRequestDto request);
         // Creates a JWT token for the user
-        Task<TokenResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto request);
+        Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken);
     }
 }
