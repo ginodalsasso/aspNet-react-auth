@@ -13,6 +13,7 @@ namespace aspNet_react_auth.Server.Services
 {
     public class AuthService(AppDbContext context, IConfiguration configuration, RSA rsa) : IAuthService
     {
+        // LOGIN ASYNC _________________________________________________________________
         public async Task<TokenResponseDto?> LoginAsync(UserDto request) // Authenticates the user and returns a JWT token
         {
             var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
@@ -34,6 +35,7 @@ namespace aspNet_react_auth.Server.Services
             return response;
         }
 
+        // REGISTER ASYNC _________________________________________________________________
         public async Task<User?> RegisterAsync(UserDto request) // Registers a new user and returns the user object
         {
             if (await context.Users.AnyAsync(u => u.Username == request.Username))
@@ -55,6 +57,7 @@ namespace aspNet_react_auth.Server.Services
             return user;
         }
 
+        // LOGOUT ASYNC _________________________________________________________________
         public async Task<bool> LogoutAsync(LogoutRequestDto request) // Logs out the user by invalidating the refresh token
         {
             var user = await context.Users.FindAsync(request.UserId);
@@ -70,6 +73,7 @@ namespace aspNet_react_auth.Server.Services
             return true;
         }
 
+        // REFRESH TOKEN ASYNC _________________________________________________________________
         public async Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken) // Creates a JWT token for the user using a refresh token
         {
             //var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
@@ -84,7 +88,7 @@ namespace aspNet_react_auth.Server.Services
             return await CreateTokenResponse(user);
         }
 
-
+        // CREATE TOKEN RESPONSE _________________________________________________________________
         private async Task<TokenResponseDto> CreateTokenResponse(User? user) // Creates a JWT token for the user
         {
             if (user == null)
@@ -99,6 +103,7 @@ namespace aspNet_react_auth.Server.Services
             };
         }
 
+        // GENERATE REFRESH TOKEN _________________________________________________________________
         private string GenerateRefreshToken(User user) // Generates a secure random refresh token
         {
             var claims = new List<Claim>
@@ -121,6 +126,7 @@ namespace aspNet_react_auth.Server.Services
             return new JwtSecurityTokenHandler().WriteToken(refreshTokenDescriptor);
         }
 
+        // GENERATE AND SAVE REFRESH TOKEN ASYNC _________________________________________________________________
         private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
         {
             var refreshToken = GenerateRefreshToken(user);
@@ -132,7 +138,7 @@ namespace aspNet_react_auth.Server.Services
             return refreshToken;
         }
 
-
+        // CREATE TOKEN _________________________________________________________________
         private string CreateToken(User user) // Creates a JWT token for the user
         {
             if (user == null)

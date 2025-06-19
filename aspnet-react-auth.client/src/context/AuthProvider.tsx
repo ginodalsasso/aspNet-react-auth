@@ -10,9 +10,10 @@ export interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const [user, setUser] = useState<User | null>(null);
-    const [accessToken, setAccessTokenState] = useState<string | null>(null);
+    const [accessToken, setAccessTokenState] = useState<string | null>(null); // JWT access token in memory
     const [loading, setLoading] = useState(true);
 
+    // Try to get new access token using refresh token cookie
     useEffect(() => {
         const initializeAuth = async () => {
             try {
@@ -37,7 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         initializeAuth();
     }, []);
 
-
+    // Functions to manage auth state by extracting user infos from the JWT
     const setAccessToken = (newAccessToken: string) => {
         const userData = parseJWT(newAccessToken);
         if (userData) {
@@ -62,6 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     // Set auth callbacks for the authService to manage tokens and user state
+    // gives authService the "tools" it needs
     useEffect(() => {
         authService.setAuthCallbacks({
             getAccessToken: () => accessToken,
@@ -72,11 +74,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // The value object that will be provided to all child components
     const value: AuthContextType = {
-        user,
-        accessToken,
-        loading,
-        setAccessToken,
-        clearAuth,
+        user,           // Current user information
+        accessToken,    // Current access token
+        loading,        // Loading state
+        setAccessToken, // Function to set access token
+        clearAuth,      // Function to logout
     };
 
     return (

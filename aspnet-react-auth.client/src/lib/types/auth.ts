@@ -27,16 +27,6 @@ export interface RegisterRequest {
     password: string;
 }
 
-export interface LogoutRequest {
-    userId: string;
-    refreshToken: string;
-}
-
-export interface RefreshTokenRequest {
-    userId: string;
-    refreshToken: string;
-}
-
 // API Response types
 export interface TokenResponse {
     accessToken: string;
@@ -46,24 +36,6 @@ export interface TokenResponse {
 export interface RegisterResponse {
     message: string;
 }
-
-export interface ApiResponse<T> {
-    success: boolean;
-    data?: T;
-    error?: string;
-}
-
-export interface ApiSuccessResponse<T> {
-    success: true;
-    data: T;
-}
-
-export interface ApiErrorResponse {
-    success: false;
-    error: string;
-}
-
-
 
 // Form validation types
 export interface LoginFormData {
@@ -77,18 +49,6 @@ export interface RegisterFormData {
     //confirmPassword: string;
 }
 
-//API Error types
-export interface ApiError {
-    message: string;
-    status?: number;
-    code?: string;
-}
-
-// JWT Token types
-export interface TokenPair {
-    accessToken: string | null;
-    refreshToken: string | null;
-}
 
 export interface JWTPayload {
     userId: string;
@@ -104,10 +64,6 @@ export interface JWTPayload {
 export interface ProtectedRouteProps {
     children: React.ReactNode;
     requiredRole?: string;
-}
-
-export interface AdminRouteProps extends ProtectedRouteProps {
-    requiredRole: 'Admin';
 }
 
 export interface AuthContextType {
