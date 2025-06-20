@@ -40,11 +40,11 @@ export class AuthService {
         // add Authorization header to options
         const authenticatedOptions: RequestInit = {
             ...options,
-            credentials: 'include',
+            credentials: 'include', // include cookies in the request
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers,
-                'Authorization': `Bearer ${accessToken}`
+                'Authorization': `Bearer ${accessToken}` // add the access token to the Authorization header
             }
         };
 

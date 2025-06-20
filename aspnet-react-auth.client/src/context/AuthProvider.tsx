@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             updateAccessToken: setAccessToken,
             logout: clearAuth
         });
-    }, [accessToken]);
+    }, [accessToken]); // Re-run effect when accessToken changes
 
     // The value object that will be provided to all child components
     const value: AuthContextType = {

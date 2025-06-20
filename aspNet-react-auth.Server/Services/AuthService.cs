@@ -7,7 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace aspNet_react_auth.Server.Services
 {
@@ -73,69 +72,18 @@ namespace aspNet_react_auth.Server.Services
             return true;
         }
 
-        // REFRESH TOKEN ASYNC _________________________________________________________________
-        public async Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken) // Creates a JWT token for the user using a refresh token
+
+        // TOKEN 
+        // CREATE JWT TOKEN _________________________________________________________________
+        private JwtSecurityToken CreateJwtToken(List<Claim> claims, TimeSpan validityDuration, SigningCredentials credentials)
         {
-            //var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
-            var user = await context.Users.FirstOrDefaultAsync(u =>
-                u.RefreshToken == refreshToken &&
-                u.RefreshTokenExpiryTime > DateTime.UtcNow);
-            if (user is null)
-            {
-                return null;
-            }
-
-            return await CreateTokenResponse(user);
-        }
-
-        // CREATE TOKEN RESPONSE _________________________________________________________________
-        private async Task<TokenResponseDto> CreateTokenResponse(User? user) // Creates a JWT token for the user
-        {
-            if (user == null)
-            {
-                throw new ArgumentNullException(nameof(user), "User cannot be null.");
-            }
-
-            return new TokenResponseDto
-            {
-                AccessToken = CreateToken(user),
-                RefreshToken = await GenerateAndSaveRefreshTokenAsync(user)
-            };
-        }
-
-        // GENERATE REFRESH TOKEN _________________________________________________________________
-        private string GenerateRefreshToken(User user) // Generates a secure random refresh token
-        {
-            var claims = new List<Claim>
-            {
-                new Claim("userId", user.Id.ToString()),
-                new Claim("type", "refresh"),
-            };
-
-            var key = new RsaSecurityKey(rsa);
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
-
-            var refreshTokenDescriptor = new JwtSecurityToken(
+            return new JwtSecurityToken(
                 issuer: configuration.GetValue<string>("AppSettings:Issuer"),
                 audience: configuration.GetValue<string>("AppSettings:Audience"),
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(7), 
+                expires: DateTime.UtcNow.Add(validityDuration),
                 signingCredentials: credentials
             );
-
-            return new JwtSecurityTokenHandler().WriteToken(refreshTokenDescriptor);
-        }
-
-        // GENERATE AND SAVE REFRESH TOKEN ASYNC _________________________________________________________________
-        private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
-        {
-            var refreshToken = GenerateRefreshToken(user);
-            user.RefreshToken = refreshToken; // Save the refresh token to the user entity
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // 7 days expiry
-
-            await context.SaveChangesAsync();
-
-            return refreshToken;
         }
 
         // CREATE TOKEN _________________________________________________________________
@@ -159,16 +107,77 @@ namespace aspNet_react_auth.Server.Services
 
             var credentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
-            var tokenDescriptor = new JwtSecurityToken(
-                issuer: configuration.GetValue<string>("AppSettings:Issuer"),       // Issuer = the entity that issues the token
-                audience: configuration.GetValue<string>("AppSettings:Audience"),   // Audience = the entity that the token is intended for
-                claims: claims,                                                     // Claims = the claims associated with the token
-                expires: DateTime.UtcNow.AddDays(1),                                // Expiration of the token
-                signingCredentials: credentials                                     // Signing credentials to sign the token
-               );
+            var tokenDescriptor = CreateJwtToken(
+                claims,
+                TimeSpan.FromMinutes(15), // 15 minutes validity for access token
+                credentials
+            );
 
             // returns the token as a string
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
+
+        // GENERATE REFRESH TOKEN _________________________________________________________________
+        private string GenerateRefreshToken(User user) // Generates a secure random refresh token
+        {
+            var claims = new List<Claim>
+            {
+                new Claim("userId", user.Id.ToString()),
+                new Claim("type", "refresh"),
+            };
+
+            var key = new RsaSecurityKey(rsa);
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
+
+            var refreshTokenDescriptor = CreateJwtToken(
+                claims,
+                TimeSpan.FromDays(7), // 7 days validity for refresh token
+                credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(refreshTokenDescriptor);
+        }
+
+        // GENERATE AND SAVE REFRESH TOKEN ASYNC _________________________________________________________________
+        private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
+        {
+            var refreshToken = GenerateRefreshToken(user);
+            user.RefreshToken = refreshToken; // Save the refresh token to the user entity
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // 7 days expiry
+
+            await context.SaveChangesAsync();
+
+            return refreshToken;
+        }
+
+        // CREATE TOKEN RESPONSE _________________________________________________________________
+        private async Task<TokenResponseDto> CreateTokenResponse(User? user) // Creates a JWT token for the user
+        {
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user), "User cannot be null.");
+            }
+
+            return new TokenResponseDto
+            {
+                AccessToken = CreateToken(user),
+                RefreshToken = await GenerateAndSaveRefreshTokenAsync(user)
+            };
+        }
+        // REFRESH TOKEN ASYNC _________________________________________________________________
+        public async Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken) // Creates a JWT token for the user using a refresh token
+        {
+            //var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
+            var user = await context.Users.FirstOrDefaultAsync(u =>
+                u.RefreshToken == refreshToken &&
+                u.RefreshTokenExpiryTime > DateTime.UtcNow);
+            if (user is null)
+            {
+                return null;
+            }
+
+            return await CreateTokenResponse(user);
+        }
     }
+
 }
