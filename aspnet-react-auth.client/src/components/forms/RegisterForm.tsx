@@ -4,6 +4,7 @@ import handleApiResponse from '../../lib/utils/handleApiResponse';
 import type { RegisterError, RegisterFormData, RegisterResponse } from '../../lib/types/auth';
 import { authService } from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
+import LoadingSpinner from '../layout/LoadingSpinner';
 
 export default function RegisterForm() {
     const [formData, setFormData] = useState<RegisterFormData>({
@@ -58,6 +59,10 @@ export default function RegisterForm() {
             setIsLoading(false);
         }
     };
+
+    if (isLoading) {
+        return <LoadingSpinner />;
+    }
 
     return (
         <div>

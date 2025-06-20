@@ -23,6 +23,22 @@ export class AuthService {
         return new Response(JSON.stringify({ message }), { status, statusText: 'Network Error' });
     }
 
+    async refreshToken(): Promise<Response> {
+        try {
+            const response = await fetch(API_ROUTES.auth.refreshToken, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            return response;
+        } catch (error) {
+            console.error('Refresh token error:', error);
+            return this.responseError();
+        }
+    }
+
     // Method to make authenticated requests
     async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
         if (!this.authCallbacks) {
@@ -30,6 +46,7 @@ export class AuthService {
             return this.responseError('Auth service not properly configured', 500);
         }
 
+        // Use the auth callbacks to get the access token and update it if needed
         const { getAccessToken, updateAccessToken, logout } = this.authCallbacks;
         const accessToken = getAccessToken();
 
@@ -147,23 +164,6 @@ export class AuthService {
             return false;
         }
     }
-
-    async refreshToken(): Promise<Response> {
-        try {
-            const response = await fetch(API_ROUTES.auth.refreshToken, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            return response;
-        } catch (error) {
-            console.error('Refresh token error:', error);
-            return this.responseError();
-        }
-    }
-
 
 
     // Protected routes using makeAuthenticatedRequest

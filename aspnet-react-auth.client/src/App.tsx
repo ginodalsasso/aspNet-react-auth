@@ -11,12 +11,13 @@ import NotFound from './pages/NotFound';
 import { AuthProvider } from './context/AuthProvider';
 import { useAuth } from './hooks/useAuth';
 import Dashboard from './pages/Dashboard';
+import LoadingSpinner from './components/layout/LoadingSpinner';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, loading } = useAuth();
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <LoadingSpinner />;
     }
 
     if (isAuthenticated) {
@@ -30,7 +31,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     console.log(isAuthenticated)
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <LoadingSpinner />;
     }
 
     if (!isAuthenticated) {

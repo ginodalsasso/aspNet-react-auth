@@ -6,6 +6,7 @@ import handleApiResponse from '../../lib/utils/handleApiResponse';
 import { parseJWT } from '../../lib/utils/jwtUtils';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import LoadingSpinner from '../layout/LoadingSpinner';
 
 export default function LoginForm() {
     const [formData, setFormData] = useState<LoginFormData>({
@@ -76,6 +77,9 @@ export default function LoginForm() {
         }
     };
 
+    if (isLoading) {
+        return <LoadingSpinner />;
+    }
 
     return (
         <div>

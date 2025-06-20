@@ -1,11 +1,12 @@
-﻿import { useAuth } from "../hooks/useAuth";
+﻿import LoadingSpinner from "../components/layout/LoadingSpinner";
+import { useAuth } from "../hooks/useAuth";
 import { authService } from "../services/authService";
 
 function Dashboard() {
     const { user, loading, clearAuth } = useAuth();
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <LoadingSpinner />;
     }
 
     const testProtected = async () => {
@@ -36,7 +37,6 @@ function Dashboard() {
                 Test Protected Route
             </button>
         </div>
-
 
     );
 };
