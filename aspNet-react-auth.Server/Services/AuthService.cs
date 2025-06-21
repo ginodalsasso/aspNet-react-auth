@@ -10,12 +10,29 @@ using System.Security.Cryptography;
 
 namespace aspNet_react_auth.Server.Services
 {
-    public class AuthService(AppDbContext context, IConfiguration configuration, RSA rsa) : IAuthService
+    public class AuthService : IAuthService
     {
+        private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly RSA _rsa;
+        private readonly ILogger<AuthService> _logger;
+
+        public AuthService(
+            AppDbContext context,
+            IConfiguration configuration,
+            RSA rsa,
+            ILogger<AuthService> logger)
+        {
+            _context = context;
+            _configuration = configuration;
+            _rsa = rsa;
+            _logger = logger;
+        }
+
         // LOGIN ASYNC _________________________________________________________________
         public async Task<TokenResponseDto?> LoginAsync(UserDto request) // Authenticates the user and returns a JWT token
         {
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
             if (user is null)
             {
                 return null;
@@ -37,8 +54,9 @@ namespace aspNet_react_auth.Server.Services
         // REGISTER ASYNC _________________________________________________________________
         public async Task<User?> RegisterAsync(UserDto request) // Registers a new user and returns the user object
         {
-            if (await context.Users.AnyAsync(u => u.Username == request.Username))
+            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
             {
+                _logger.LogWarning("Registration failed: username '{Username}' is already taken", request.Username);
                 return null; // User already exists  
             }
 
@@ -50,8 +68,11 @@ namespace aspNet_react_auth.Server.Services
                 .Trim();
             user.PasswordHash = hashedPassword;
 
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("New user: {Username}", user.Username);
+
 
             return user;
         }
@@ -59,7 +80,7 @@ namespace aspNet_react_auth.Server.Services
         // LOGOUT ASYNC _________________________________________________________________
         public async Task<bool> LogoutAsync(LogoutRequestDto request) // Logs out the user by invalidating the refresh token
         {
-            var user = await context.Users.FindAsync(request.UserId);
+            var user = await _context.Users.FindAsync(request.UserId);
             if (user is null || user.RefreshToken != request.RefreshToken)
             {
                 return false; // Invalid user or refresh token
@@ -67,7 +88,7 @@ namespace aspNet_react_auth.Server.Services
             user.RefreshToken = null; // Invalidate the refresh token
             user.RefreshTokenExpiryTime = null; // Reset expiry time
 
-            await context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
             return true;
         }
@@ -78,8 +99,8 @@ namespace aspNet_react_auth.Server.Services
         private JwtSecurityToken CreateJwtToken(List<Claim> claims, TimeSpan validityDuration, SigningCredentials credentials)
         {
             return new JwtSecurityToken(
-                issuer: configuration.GetValue<string>("AppSettings:Issuer"),
-                audience: configuration.GetValue<string>("AppSettings:Audience"),
+                issuer: _configuration.GetValue<string>("AppSettings:Issuer"),
+                audience: _configuration.GetValue<string>("AppSettings:Audience"),
                 claims: claims,
                 expires: DateTime.UtcNow.Add(validityDuration),
                 signingCredentials: credentials
@@ -103,7 +124,7 @@ namespace aspNet_react_auth.Server.Services
             };
 
             // Create a symmetric security key using the secret key from configuration
-            var key = new RsaSecurityKey(rsa);
+            var key = new RsaSecurityKey(_rsa);
 
             var credentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
@@ -126,7 +147,7 @@ namespace aspNet_react_auth.Server.Services
                 new Claim("type", "refresh"),
             };
 
-            var key = new RsaSecurityKey(rsa);
+            var key = new RsaSecurityKey(_rsa);
             var credentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
             var refreshTokenDescriptor = CreateJwtToken(
@@ -145,7 +166,7 @@ namespace aspNet_react_auth.Server.Services
             user.RefreshToken = refreshToken; // Save the refresh token to the user entity
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // 7 days expiry
 
-            await context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
             return refreshToken;
         }
@@ -168,7 +189,7 @@ namespace aspNet_react_auth.Server.Services
         public async Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken) // Creates a JWT token for the user using a refresh token
         {
             //var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
-            var user = await context.Users.FirstOrDefaultAsync(u =>
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
                 u.RefreshToken == refreshToken &&
                 u.RefreshTokenExpiryTime > DateTime.UtcNow);
             if (user is null)

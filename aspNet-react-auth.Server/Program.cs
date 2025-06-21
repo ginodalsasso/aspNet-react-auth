@@ -1,4 +1,5 @@
 using aspNet_react_auth.Server.Data;
+using aspNet_react_auth.Server.Extensions;
 using aspNet_react_auth.Server.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,9 @@ using System.Security.Cryptography;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog for logging
+builder.Host.SerilogConfiguration();
 
 // Add services to the container.
 builder.Configuration

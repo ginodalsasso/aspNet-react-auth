@@ -2,7 +2,6 @@
 using aspNet_react_auth.Server.Models;
 using aspNet_react_auth.Server.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -11,8 +10,15 @@ namespace aspNet_react_auth.Server.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(IAuthService authService) : ControllerBase
+    public class AuthController : ControllerBase
     {
+        private readonly IAuthService _authService; // Service for handling authentication logic
+
+        public AuthController(IAuthService authService)
+        {
+            _authService = authService;
+        }
+
         private readonly CookieOptions _refreshTokenCookieOptions = new()
         {
             HttpOnly = true,                // HttpOnly prevents client-side scripts from accessing the cookie
@@ -40,7 +46,7 @@ namespace aspNet_react_auth.Server.Controllers
                 return BadRequest(validationErrors); // Return validation errors if the model state is invalid
             }
 
-            var user = await authService.RegisterAsync(request);
+            var user = await _authService.RegisterAsync(request);
             if (user is null)
             {
                 var error = new ErrorResponse
@@ -58,7 +64,7 @@ namespace aspNet_react_auth.Server.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<TokenResponseDto>> Login(UserDto request) // Authenticates the user and returns a JWT token
         {
-            var result = await authService.LoginAsync(request);
+            var result = await _authService.LoginAsync(request);
             if (result is null)
             {
                 var error = new ErrorResponse
@@ -106,7 +112,7 @@ namespace aspNet_react_auth.Server.Controllers
                 RefreshToken = refreshToken
             };
 
-            var result = await authService.LogoutAsync(logoutRequest);
+            var result = await _authService.LogoutAsync(logoutRequest);
             if (!result)
             {
                 var error = new ErrorResponse
@@ -153,7 +159,7 @@ namespace aspNet_react_auth.Server.Controllers
                     RefreshToken = refreshToken
                 };
 
-                var result = await authService.RefreshTokenAsync(refreshToken);
+                var result = await _authService.RefreshTokenAsync(refreshToken);
                 if (result is null || result.AccessToken is null || result.RefreshToken is null)
                 {
                     // Delete the cookie if the refresh token is invalid or expired
