@@ -9,6 +9,7 @@ namespace aspNet_react_auth.Server.Extensions
             host.UseSerilog((context, loggerConfig) =>
             {
                 loggerConfig.WriteTo.Console();
+                loggerConfig.WriteTo.File("Logs/logs-.txt", Serilog.Events.LogEventLevel.Information, rollingInterval: RollingInterval.Day);
             });
         }
     }
