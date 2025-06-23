@@ -35,6 +35,7 @@ namespace aspNet_react_auth.Server.Services
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
             if (user is null)
             {
+                _logger.LogWarning("Login failed: no user found with username '{Username}'", request.Username);
                 return null;
             }
 
@@ -43,6 +44,7 @@ namespace aspNet_react_auth.Server.Services
 
             if (passwordVerificationResult == PasswordVerificationResult.Failed)
             {
+                _logger.LogWarning("Login failed: incorrect username or password for username '{Username}'", request.Username);
                 return null;
             }
 
@@ -73,7 +75,6 @@ namespace aspNet_react_auth.Server.Services
 
             _logger.LogInformation("New user: {Username}", user.Username);
 
-
             return user;
         }
 
@@ -83,6 +84,7 @@ namespace aspNet_react_auth.Server.Services
             var user = await _context.Users.FindAsync(request.UserId);
             if (user is null || user.RefreshToken != request.RefreshToken)
             {
+                _logger.LogWarning("Logout failed: invalid user or refresh token for user ID '{UserId}'", request.UserId);
                 return false; // Invalid user or refresh token
             }
             user.RefreshToken = null; // Invalidate the refresh token
@@ -112,6 +114,7 @@ namespace aspNet_react_auth.Server.Services
         {
             if (user == null)
             {
+                _logger.LogError("CreateToken failed: user is null");
                 throw new ArgumentNullException(nameof(user), "User cannot be null.");
             }
 
@@ -176,6 +179,7 @@ namespace aspNet_react_auth.Server.Services
         {
             if (user == null)
             {
+                _logger.LogError("CreateTokenResponse failed: user is null");
                 throw new ArgumentNullException(nameof(user), "User cannot be null.");
             }
 
@@ -194,6 +198,7 @@ namespace aspNet_react_auth.Server.Services
                 u.RefreshTokenExpiryTime > DateTime.UtcNow);
             if (user is null)
             {
+                _logger.LogWarning("Refresh token failed: no user found with valid refresh token '{RefreshToken}'", refreshToken);
                 return null;
             }
 
