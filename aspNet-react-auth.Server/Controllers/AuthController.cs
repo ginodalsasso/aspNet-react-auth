@@ -4,6 +4,7 @@ using aspNet_react_auth.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace aspNet_react_auth.Server.Controllers
 {
@@ -46,15 +47,15 @@ namespace aspNet_react_auth.Server.Controllers
                 return BadRequest(validationErrors); // Return validation errors if the model state is invalid
             }
 
-            var user = await _authService.RegisterAsync(request);
-            if (user is null)
+            var (isSuccess, error, user) = await _authService.RegisterAsync(request);
+
+            if (!isSuccess)
             {
-                var error = new ErrorResponse
+                return BadRequest(new ErrorResponse
                 {
-                    Message = "Registration failed",
-                    Details = "A user with this username already exists"
-                };
-                return BadRequest(error);
+                    Message = "Register failed",
+                    Details = error
+                });
             }
 
             return Ok(new { message = "Registration successful" });

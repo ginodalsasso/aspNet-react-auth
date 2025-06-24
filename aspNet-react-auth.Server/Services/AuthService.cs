@@ -32,6 +32,12 @@ namespace aspNet_react_auth.Server.Services
         // LOGIN ASYNC _________________________________________________________________
         public async Task<TokenResponseDto?> LoginAsync(UserDto request) // Authenticates the user and returns a JWT token
         {
+            if (!string.IsNullOrWhiteSpace(request.Website)) // Honeypot field check
+            {
+                _logger.LogWarning("Bot detected: honeypot field filled (Website: '{Website}')", request.Website);
+                return null;
+            }
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
             if (user is null)
             {
@@ -54,12 +60,19 @@ namespace aspNet_react_auth.Server.Services
         }
 
         // REGISTER ASYNC _________________________________________________________________
-        public async Task<User?> RegisterAsync(UserDto request) // Registers a new user and returns the user object
+        public async Task<(bool isSuccess, string? error, User? user)> RegisterAsync(UserDto request) // Registers a new user and returns the user object
         {
+            _logger.LogInformation(request.Website);
+            if (!string.IsNullOrWhiteSpace(request.Website)) // Honeypot field check
+            {
+                _logger.LogWarning("Bot detected: honeypot field filled (Website: '{Website}')", request.Website);
+                return (false, "Bot detected", null);
+            }
+
             if (await _context.Users.AnyAsync(u => u.Username == request.Username))
             {
                 _logger.LogWarning("Registration failed: username '{Username}' is already taken", request.Username);
-                return null; // User already exists  
+                return (false, "Username is taken", null); // User already exists  
             }
 
             var user = new User();
@@ -75,7 +88,7 @@ namespace aspNet_react_auth.Server.Services
 
             _logger.LogInformation("New user: {Username}", user.Username);
 
-            return user;
+            return (true, null, user);
         }
 
         // LOGOUT ASYNC _________________________________________________________________

@@ -16,5 +16,8 @@ namespace aspNet_react_auth.Server.Models
         [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{12,}$",
         ErrorMessage = "Password must be at least 12 characters long, contain at least one uppercase letter, one digit, and one special character")]
         public string Password { get; set; } = string.Empty;
+
+        // Optional field used for honeypot protection
+        public string? Website { get; set; } = string.Empty;
     }
 }

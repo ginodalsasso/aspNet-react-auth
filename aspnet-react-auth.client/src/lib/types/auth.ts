@@ -17,12 +17,12 @@ export interface RegisterError {
 }
 
 // API Request types
-export interface LoginRequest {
+export interface LoginRequest extends HoneypotField {
     username: string;
     password: string;
 }
 
-export interface RegisterRequest {
+export interface RegisterRequest extends HoneypotField {
     username: string;
     password: string;
 }
@@ -38,15 +38,18 @@ export interface RegisterResponse {
 }
 
 // Form validation types
-export interface LoginFormData {
+export interface LoginFormData extends HoneypotField {
     username: string;
     password: string;
 }
 
-export interface RegisterFormData {
+export interface RegisterFormData extends HoneypotField {
     username: string;
     password: string;
-    //confirmPassword: string;
+}
+
+export interface HoneypotField {
+    website: string; // Honeypot field to detect bots
 }
 
 

@@ -5,11 +5,13 @@ import type { RegisterError, RegisterFormData, RegisterResponse } from '../../li
 import { authService } from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../layout/LoadingSpinner';
+import HoneypotField from '../ui/HoneypotField';
 
 export default function RegisterForm() {
     const [formData, setFormData] = useState<RegisterFormData>({
         username: '',
-        password: ''
+        password: '',
+        website: '' // Honeypot field to detect bots
     });
 
     const navigate = useNavigate();
@@ -34,7 +36,7 @@ export default function RegisterForm() {
         setErrors({});
 
         try {
-            const response = await authService.register(formData.username, formData.password);
+            const response = await authService.register(formData);
             await handleApiResponse<RegisterResponse>(
                 ['username', 'password'], // Fields to check for backend errors
                 response,
@@ -45,7 +47,8 @@ export default function RegisterForm() {
                     setMessage(data.message);
                     setFormData({
                         username: '',
-                        password: ''
+                        password: '',
+                        website: ''
                     });
                     if (response.ok) {
                         setTimeout(() => navigate('/login'), 1500); // Redirect after 1.5 seconds
@@ -100,6 +103,8 @@ export default function RegisterForm() {
                     />
                     <FormErrorMessage message={errors?.password} />
                 </div>
+
+                <HoneypotField value={formData.website} onChange={handleChange} />
 
                 <button type="submit" disabled={isLoading}>
                     {isLoading ? 'Loading' : 'Register'}

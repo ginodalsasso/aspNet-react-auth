@@ -107,11 +107,7 @@ export class AuthService {
     }
 
     // Login method to authenticate user
-    async login(username: string, password: string): Promise<Response> {
-        const loginData: LoginRequest = {
-            username,
-            password 
-        };
+    async login(data: LoginRequest): Promise<Response> {
 
         try {
             const response = await fetch(API_ROUTES.auth.login, {
@@ -120,7 +116,7 @@ export class AuthService {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(loginData),
+                body: JSON.stringify(data),
             });
 
             return response;
@@ -130,11 +126,7 @@ export class AuthService {
         }
     }
 
-    async register(username: string, password: string): Promise<Response> {
-        const registerData: RegisterRequest = {
-            username,
-            password
-        };
+    async register(data: RegisterRequest): Promise<Response> {
 
         try {
             const response = await fetch(`${API_ROUTES.auth.register}`, {
@@ -142,7 +134,7 @@ export class AuthService {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(registerData),
+                body: JSON.stringify(data),
             });
 
             return response;

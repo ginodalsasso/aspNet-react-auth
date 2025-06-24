@@ -7,11 +7,13 @@ import { parseJWT } from '../../lib/utils/jwtUtils';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../layout/LoadingSpinner';
+import HoneypotField from '../ui/HoneypotField';
 
 export default function LoginForm() {
     const [formData, setFormData] = useState<LoginFormData>({
         username: '',
-        password: ''
+        password: '',
+        website: '' // Hidden field for honeypot
     });
 
     const navigate = useNavigate();
@@ -41,7 +43,7 @@ export default function LoginForm() {
         setErrors({});
 
         try {
-            const response = await authService.login(formData.username, formData.password);
+            const response = await authService.login(formData);
 
             await handleApiResponse<TokenResponse>(
                 ['username', 'password'], // Fields to check for backend errors
@@ -58,7 +60,8 @@ export default function LoginForm() {
                         setMessage('Login successful!');
                         setFormData({
                             username: '',
-                            password: ''
+                            password: '',
+                            website: '' 
                         });
 
                         if (response.ok) {
@@ -118,6 +121,8 @@ export default function LoginForm() {
                     />
                     <FormErrorMessage message={errors?.password} />
                 </div>
+
+                <HoneypotField value={formData.website} onChange={handleChange} />
 
                 <button type="submit" disabled={isLoading}>
                     {isLoading ? ' Loading...' : 'Login'}
