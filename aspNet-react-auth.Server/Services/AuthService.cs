@@ -62,7 +62,6 @@ namespace aspNet_react_auth.Server.Services
         // REGISTER ASYNC _________________________________________________________________
         public async Task<(bool isSuccess, string? error, User? user)> RegisterAsync(UserDto request) // Registers a new user and returns the user object
         {
-            _logger.LogInformation(request.Website);
             if (!string.IsNullOrWhiteSpace(request.Website)) // Honeypot field check
             {
                 _logger.LogWarning("Bot detected: honeypot field filled (Website: '{Website}')", request.Website);
@@ -88,6 +87,7 @@ namespace aspNet_react_auth.Server.Services
 
             _logger.LogInformation("New user: {Username}", user.Username);
 
+            // return true if registration is successful, the error message is null, and the user object
             return (true, null, user);
         }
 

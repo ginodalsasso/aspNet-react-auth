@@ -27,6 +27,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     if (userData) {
                         setUser(userData);
                     }
+                } else if (response.status === 401) {
+                    // if response is 401, it means the refresh token is invalid or expired
+                    setUser(null);
+                    setAccessTokenState(null);
+                } else {
+                    console.error('Failed to refresh token:', response.statusText);
                 }
             } catch (error) {
                 console.error('No existing session found', error);
