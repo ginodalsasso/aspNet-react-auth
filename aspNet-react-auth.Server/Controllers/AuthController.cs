@@ -1,6 +1,7 @@
 ﻿using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Models;
 using aspNet_react_auth.Server.Services;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
@@ -14,10 +15,12 @@ namespace aspNet_react_auth.Server.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService; // Service for handling authentication logic
+        private readonly IAntiforgery _antiforgery; // Service for CSRF protection
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IAntiforgery antiforgery)
         {
             _authService = authService;
+            _antiforgery = antiforgery;
         }
 
         private readonly CookieOptions _refreshTokenCookieOptions = new()
@@ -29,6 +32,14 @@ namespace aspNet_react_auth.Server.Controllers
             Path = "/api/Auth"              // Set the path for the cookie to be accessible only under this route 
         };
 
+        // CSRF TOKEN ENDPOINT _____________________________________________________________________
+        [HttpGet("csrf-token")]
+        public IActionResult GetCsrfToken()
+        {
+            var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
+            return Ok(new { token = tokens.RequestToken });
+        }
+
         // TEST ENDPOINT _____________________________________________________________________
         [Authorize(Roles = "Admin")]
         [HttpGet("test-protected-route")]
@@ -39,6 +50,7 @@ namespace aspNet_react_auth.Server.Controllers
 
         // REGISTER ENDPOINT _____________________________________________________________________
         [HttpPost("register")]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult<User>> Register(UserDto request) // Registers a new user and returns the user object
         {
             if (!ModelState.IsValid)
@@ -63,6 +75,7 @@ namespace aspNet_react_auth.Server.Controllers
 
         // LOGIN ENDPOINT _____________________________________________________________________
         [HttpPost("login")]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult<TokenResponseDto>> Login(UserDto request) // Authenticates the user and returns a JWT token
         {
             var result = await _authService.LoginAsync(request);
@@ -84,6 +97,7 @@ namespace aspNet_react_auth.Server.Controllers
         // LOGOUT ENDPOINT _____________________________________________________________________
         [Authorize]
         [HttpPost("logout")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout() // Logs out the user by invalidating the refresh token
         {
             if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken)) // get the refresh token from the cookie
@@ -136,6 +150,7 @@ namespace aspNet_react_auth.Server.Controllers
 
         // REFRESH TOKEN ENDPOINT _____________________________________________________________________
         [HttpPost("refresh-token")]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult<object>> RefreshToken()
         {
             if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))

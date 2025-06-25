@@ -67,6 +67,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Configure CSRF Protection
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+    options.Cookie.Name = "__Host-X-XSRF-TOKEN";
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.HttpOnly = false;
+});
+
 // Add singleton RSA key for signing JWT tokens
 builder.Services.AddSingleton(rsa);
 
@@ -84,11 +94,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors(clientAddress);
+
 app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.UseCors(clientAddress);
+app.UseAntiforgery();
+
 
 app.MapControllers();
 
