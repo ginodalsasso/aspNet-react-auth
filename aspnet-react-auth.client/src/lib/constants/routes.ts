@@ -14,6 +14,7 @@ const authRoutes = {
     register: `${authBase}/register`,
     logout: `${authBase}/logout`,
     refreshToken: `${authBase}/refresh-token`,
+    csrfToken: `${authBase}/csrf-token`,
 
     // test
     testProtectedRoute: `${authBase}/test-protected-route`,

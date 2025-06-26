@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace aspNet_react_auth.Server.Controllers
 {
@@ -50,7 +49,6 @@ namespace aspNet_react_auth.Server.Controllers
 
         // REGISTER ENDPOINT _____________________________________________________________________
         [HttpPost("register")]
-        [ValidateAntiForgeryToken]
         public async Task<ActionResult<User>> Register(UserDto request) // Registers a new user and returns the user object
         {
             if (!ModelState.IsValid)
@@ -75,7 +73,6 @@ namespace aspNet_react_auth.Server.Controllers
 
         // LOGIN ENDPOINT _____________________________________________________________________
         [HttpPost("login")]
-        [ValidateAntiForgeryToken]
         public async Task<ActionResult<TokenResponseDto>> Login(UserDto request) // Authenticates the user and returns a JWT token
         {
             var result = await _authService.LoginAsync(request);
@@ -140,7 +137,7 @@ namespace aspNet_react_auth.Server.Controllers
 
             Response.Cookies.Delete("refreshToken", new CookieOptions
             {
-                Path = "/api/auth",
+                Path = "/api/Auth",
                 Secure = true,
                 SameSite = SameSiteMode.Strict
             });
@@ -150,7 +147,6 @@ namespace aspNet_react_auth.Server.Controllers
 
         // REFRESH TOKEN ENDPOINT _____________________________________________________________________
         [HttpPost("refresh-token")]
-        [ValidateAntiForgeryToken]
         public async Task<ActionResult<object>> RefreshToken()
         {
             if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))

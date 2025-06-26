@@ -17,6 +17,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     useEffect(() => {
         const initializeAuth = async () => {
             try {
+                //await authService.getCsrfToken();
+
                 const response = await authService.refreshToken();
 
                 if (response.ok) {
@@ -27,10 +29,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     if (userData) {
                         setUser(userData);
                     }
-                } else if (response.status === 401) {
-                    // if response is 401, it means the refresh token is invalid or expired
-                    setUser(null);
-                    setAccessTokenState(null);
                 } else {
                     console.error('Failed to refresh token:', response.statusText);
                 }

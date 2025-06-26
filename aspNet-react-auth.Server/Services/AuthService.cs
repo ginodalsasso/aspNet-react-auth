@@ -95,11 +95,17 @@ namespace aspNet_react_auth.Server.Services
         public async Task<bool> LogoutAsync(LogoutRequestDto request) // Logs out the user by invalidating the refresh token
         {
             var user = await _context.Users.FindAsync(request.UserId);
-            if (user is null || user.RefreshToken != request.RefreshToken)
+            if (user is null)
             {
-                _logger.LogWarning("Logout failed: invalid user or refresh token for user ID '{UserId}'", request.UserId);
-                return false; // Invalid user or refresh token
+                _logger.LogWarning("Logout failed: user not found for user ID '{UserId}'", request.UserId);
+                return false;
             }
+
+            if (user.RefreshToken != request.RefreshToken) // if the refresh token does not match
+            {
+                _logger.LogInformation("Refresh token already invalid or mismatched for user ID '{UserId}'", request.UserId);
+            }
+
             user.RefreshToken = null; // Invalidate the refresh token
             user.RefreshTokenExpiryTime = null; // Reset expiry time
 

@@ -13,6 +13,7 @@ interface AuthCallbacks {
 export class AuthService {
 
     private authCallbacks?: AuthCallbacks;
+    private csrfToken: string | null = null;
 
     // Method to set authentication callbacks for managing tokens and user state
     setAuthCallbacks(callbacks: AuthCallbacks) {
@@ -39,6 +40,34 @@ export class AuthService {
         }
     }
 
+    async getCsrfToken(): Promise<string | null> {
+        if (this.csrfToken) {
+            return this.csrfToken;
+        }
+
+        try {
+            const response = await fetch(API_ROUTES.auth.csrfToken, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.csrfToken = data.token;
+                return this.csrfToken;
+            } else {
+                console.error('Failed to get CSRF token:', response.statusText);
+                return null;
+            }
+        } catch (error) {
+            console.error('CSRF token error:', error);
+            return null;
+        }
+    }
+
     // Method to make authenticated requests
     async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
         if (!this.authCallbacks) {
@@ -54,6 +83,12 @@ export class AuthService {
             return this.responseError('No access token available', 401);
         }
 
+        if (!this.csrfToken) {
+            await this.getCsrfToken();
+        }
+
+        const csrfHeader= this.csrfToken;
+
         // add Authorization header to options
         const authenticatedOptions: RequestInit = {
             ...options,
@@ -61,6 +96,7 @@ export class AuthService {
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers,
+                ...(csrfHeader ? { 'X-CSRF-TOKEN': csrfHeader } : {}), // add CSRF token if available
                 'Authorization': `Bearer ${accessToken}` // add the access token to the Authorization header
             }
         };
@@ -86,6 +122,7 @@ export class AuthService {
                         headers: {
                             'Content-Type': 'application/json',
                             ...options.headers,
+                            ...(csrfHeader ? { 'X-CSRF-TOKEN': csrfHeader } : {}), // add CSRF token if available
                             'Authorization': `Bearer ${newTokenData.accessToken}`
                         }
                     };
@@ -147,7 +184,10 @@ export class AuthService {
     async logout(): Promise<boolean> {
         try {
             const response = await this.makeAuthenticatedRequest(API_ROUTES.auth.logout, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             });
 
             return response.ok;
