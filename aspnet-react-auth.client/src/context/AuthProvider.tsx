@@ -17,7 +17,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     useEffect(() => {
         const initializeAuth = async () => {
             try {
-                //await authService.getCsrfToken();
+                await authService.getCsrfToken();
 
                 const response = await authService.refreshToken();
 
@@ -60,7 +60,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } catch (error) {
             console.error('Error during logout:', error);
         } finally {
-            // Toujours nettoyer, même en cas d'erreur
             setUser(null);
             setAccessTokenState(null);
         }

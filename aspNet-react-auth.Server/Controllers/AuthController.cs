@@ -4,6 +4,8 @@ using aspNet_react_auth.Server.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace aspNet_react_auth.Server.Controllers
@@ -15,11 +17,13 @@ namespace aspNet_react_auth.Server.Controllers
     {
         private readonly IAuthService _authService; // Service for handling authentication logic
         private readonly IAntiforgery _antiforgery; // Service for CSRF protection
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService authService, IAntiforgery antiforgery)
+        public AuthController(IAuthService authService, IAntiforgery antiforgery, ILogger<AuthController> logger)
         {
             _authService = authService;
             _antiforgery = antiforgery;
+            _logger = logger;
         }
 
         private readonly CookieOptions _refreshTokenCookieOptions = new()
@@ -87,6 +91,7 @@ namespace aspNet_react_auth.Server.Controllers
             }
 
             Response.Cookies.Append("refreshToken", result.RefreshToken, _refreshTokenCookieOptions);
+            _antiforgery.GetAndStoreTokens(HttpContext);
 
             return Ok(new { accessToken = result.AccessToken });
         }
@@ -97,6 +102,7 @@ namespace aspNet_react_auth.Server.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout() // Logs out the user by invalidating the refresh token
         {
+
             if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken)) // get the refresh token from the cookie
             {
                 var error = new ErrorResponse
@@ -177,7 +183,7 @@ namespace aspNet_react_auth.Server.Controllers
                     // Delete the cookie if the refresh token is invalid or expired
                     Response.Cookies.Delete("refreshToken", new CookieOptions
                     {
-                        Path = "/api/auth",
+                        Path = "/api/Auth",
                         Secure = true,
                         SameSite = SameSiteMode.Strict
                     });

@@ -94,6 +94,8 @@ namespace aspNet_react_auth.Server.Services
         // LOGOUT ASYNC _________________________________________________________________
         public async Task<bool> LogoutAsync(LogoutRequestDto request) // Logs out the user by invalidating the refresh token
         {
+            _logger.LogInformation("LogoutAsync {request}", request);
+
             var user = await _context.Users.FindAsync(request.UserId);
             if (user is null)
             {

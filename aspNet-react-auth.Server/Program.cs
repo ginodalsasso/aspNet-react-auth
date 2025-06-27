@@ -18,6 +18,8 @@ builder.Configuration
     .AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: true);
 
 builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -100,7 +102,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseAntiforgery();
-
 
 app.MapControllers();
 
