@@ -75,4 +75,5 @@ export interface AuthContextType {
     loading: boolean;                    // Loading state during initialization
     setAccessToken: (accessToken: string) => void; 
     clearAuth: () => void;               // Function to logout user
+    csrfToken: string | null;           // CSRF token for secure requests
 }

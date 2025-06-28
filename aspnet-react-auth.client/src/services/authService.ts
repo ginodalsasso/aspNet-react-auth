@@ -8,12 +8,12 @@ interface AuthCallbacks {
     getAccessToken: () => string | null;
     updateAccessToken: (accessToken: string) => void;
     logout: () => void;
+    getCsrfToken: () => string | null;
 }
 
 export class AuthService {
 
     private authCallbacks?: AuthCallbacks;
-    private csrfToken: string | null = null;
 
     // Method to set authentication callbacks for managing tokens and user state
     setAuthCallbacks(callbacks: AuthCallbacks) {
@@ -40,40 +40,6 @@ export class AuthService {
         }
     }
 
-    async getCsrfToken(forceRefresh: boolean = false): Promise<string | null> {
-
-        if (this.csrfToken && !forceRefresh) {
-            return this.csrfToken;
-        }
-
-        try {
-            const response = await fetch(API_ROUTES.auth.csrfToken, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                this.csrfToken = data.token;
-
-                return this.csrfToken;
-            } else {
-                console.error('Failed to get CSRF token:', response.statusText);
-                return null;
-            }
-        } catch (error) {
-            console.error('CSRF token error:', error);
-            return null;
-        }
-    }
-
-    async initializeSession(): Promise<void> {
-        this.csrfToken = await this.getCsrfToken(true);
-    }
-
     // Method to make authenticated requests
     async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
         if (!this.authCallbacks) {
@@ -82,15 +48,16 @@ export class AuthService {
         }
 
         // Use the auth callbacks to get the access token and update it if needed
-        const { getAccessToken, updateAccessToken, logout } = this.authCallbacks;
+        const { getAccessToken, updateAccessToken, logout, getCsrfToken } = this.authCallbacks;
         const accessToken = getAccessToken();
+        const csrfToken = getCsrfToken();
 
         if (!accessToken) {
             return this.responseError('No access token available', 401);
         }
 
-        const csrfHeader = this.csrfToken;
-        if (!csrfHeader) {
+        if (!csrfToken) {
+            console.warn('Missing CSRF token')
             return this.responseError('Missing CSRF token', 403);
         }
 
@@ -101,7 +68,7 @@ export class AuthService {
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers,
-                ...(csrfHeader ? { 'X-XSRF-TOKEN': csrfHeader } : {}), // add CSRF token if available
+                'X-XSRF-TOKEN': csrfToken,
                 'Authorization': `Bearer ${accessToken}` // add the access token to the Authorization header
             }
         };
@@ -119,15 +86,13 @@ export class AuthService {
 
                     updateAccessToken(newTokenData.accessToken); // update tokens in context
 
-                    const newCsrfHeader = await this.getCsrfToken(true);
-
                     const retryOptions: RequestInit = { // RequestInit for retrying the request
                         ...options,
                         credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
                             ...options.headers,
-                            ...(newCsrfHeader ? { 'X-XSRF-TOKEN': newCsrfHeader } : {}), // use the new CSRF token if available
+                            'X-XSRF-TOKEN': getCsrfToken() ?? '',
                             'Authorization': `Bearer ${newTokenData.accessToken}`
                         }
                     };
@@ -159,10 +124,6 @@ export class AuthService {
                 body: JSON.stringify(data),
             });
 
-            if (response.ok) {
-                await authService.initializeSession();
-            }
-
             return response;
         } catch (error) {
             console.error('Login error:', error);
@@ -193,11 +154,6 @@ export class AuthService {
             const response = await this.makeAuthenticatedRequest(API_ROUTES.auth.logout, {
                 method: 'POST',
             });
-
-            if (response.ok) {
-                this.csrfToken = null;
-            }
-
             return response.ok;
         } catch (error) {
             console.error('Logout error:', error);

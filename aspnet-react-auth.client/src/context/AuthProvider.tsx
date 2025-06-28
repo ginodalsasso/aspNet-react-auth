@@ -3,6 +3,7 @@ import type { User, AuthContextType } from '../lib/types/auth';
 import { parseJWT } from '../lib/utils/jwtUtils';
 import { authService } from '../services/authService';
 import { AuthContext } from './AuthContext';
+import API_ROUTES from '../lib/constants/routes';
 export interface AuthProviderProps {
     children: ReactNode;  // All child components that will have access to auth
 }
@@ -11,7 +12,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const [user, setUser] = useState<User | null>(null);
     const [accessToken, setAccessTokenState] = useState<string | null>(null); // JWT access token in memory
+    const [csrfToken, setCsrfToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const fetchCsrfToken = async () => {
+        try {
+            const response = await fetch(API_ROUTES.auth.csrfToken, {
+                credentials: "include"
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch CSRF token: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            setCsrfToken(data.token);
+        } catch (error) {
+            console.error("Failed to fetch CSRF token", error);
+        }
+    };
+
 
     // Try to get new access token using refresh token cookie
     useEffect(() => {
@@ -27,6 +48,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     if (userData) {
                         setUser(userData);
                     }
+
+                    await fetchCsrfToken();
+
                 } else {
                     console.error('Failed to refresh token:', response.statusText);
                 }
@@ -69,9 +93,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         authService.setAuthCallbacks({
             getAccessToken: () => accessToken,
             updateAccessToken: setAccessToken,
-            logout: clearAuth
+            logout: clearAuth,
+            getCsrfToken: () => csrfToken
         });
-    }, [accessToken]); // Re-run effect when accessToken changes
+    }, [accessToken, csrfToken]); // Re-run effect when accessToken changes
 
     // The value object that will be provided to all child components
     const value: AuthContextType = {
@@ -80,6 +105,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         loading,        // Loading state
         setAccessToken, // Function to set access token
         clearAuth,      // Function to logout
+        csrfToken
     };
 
     return (
