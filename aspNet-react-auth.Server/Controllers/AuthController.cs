@@ -79,6 +79,11 @@ namespace aspNet_react_auth.Server.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<TokenResponseDto>> Login(UserDto request) // Authenticates the user and returns a JWT token
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ValidationErrorResponse(ModelState));
+            }
+
             var result = await _authService.LoginAsync(request);
             if (result is null)
             {
@@ -91,7 +96,6 @@ namespace aspNet_react_auth.Server.Controllers
             }
 
             Response.Cookies.Append("refreshToken", result.RefreshToken, _refreshTokenCookieOptions);
-            _antiforgery.GetAndStoreTokens(HttpContext);
 
             return Ok(new { accessToken = result.AccessToken });
         }
@@ -105,6 +109,7 @@ namespace aspNet_react_auth.Server.Controllers
 
             if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken)) // get the refresh token from the cookie
             {
+                _logger.LogWarning("Logout failed: no refresh token found in cookies");
                 var error = new ErrorResponse
                 {
                     Message = "Logout failed",
@@ -116,6 +121,7 @@ namespace aspNet_react_auth.Server.Controllers
             var userId = HttpContext.User.FindFirst("userId")?.Value;
             if (string.IsNullOrEmpty(userId))
             {
+                _logger.LogWarning("Logout failed: user ID not found in claims");
                 var error = new ErrorResponse
                 {
                     Message = "Logout failed",
@@ -133,6 +139,7 @@ namespace aspNet_react_auth.Server.Controllers
             var result = await _authService.LogoutAsync(logoutRequest);
             if (!result)
             {
+                _logger.LogWarning("Logout failed: invalid logout request for user ID '{UserId}'", userId);
                 var error = new ErrorResponse
                 {
                     Message = "Logout failed",

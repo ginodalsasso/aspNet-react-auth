@@ -41,6 +41,7 @@ export class AuthService {
     }
 
     async getCsrfToken(forceRefresh: boolean = false): Promise<string | null> {
+
         if (this.csrfToken && !forceRefresh) {
             return this.csrfToken;
         }
@@ -57,6 +58,7 @@ export class AuthService {
             if (response.ok) {
                 const data = await response.json();
                 this.csrfToken = data.token;
+
                 return this.csrfToken;
             } else {
                 console.error('Failed to get CSRF token:', response.statusText);
@@ -66,6 +68,10 @@ export class AuthService {
             console.error('CSRF token error:', error);
             return null;
         }
+    }
+
+    async initializeSession(): Promise<void> {
+        this.csrfToken = await this.getCsrfToken(true);
     }
 
     // Method to make authenticated requests
@@ -83,12 +89,10 @@ export class AuthService {
             return this.responseError('No access token available', 401);
         }
 
-        const csrfToken = await this.getCsrfToken();
-        if (!csrfToken) {
+        const csrfHeader = this.csrfToken;
+        if (!csrfHeader) {
             return this.responseError('Missing CSRF token', 403);
         }
-
-        const csrfHeader = this.csrfToken;
 
         // add Authorization header to options
         const authenticatedOptions: RequestInit = {
@@ -108,8 +112,6 @@ export class AuthService {
 
             // If error status is 401 (Unauthorized), attempt to refresh token
             if (response.status === 401) {
-                console.log('Attempting refresh...');
-
                 const refreshResponse = await this.refreshToken();
 
                 if (refreshResponse.ok) {
@@ -117,17 +119,18 @@ export class AuthService {
 
                     updateAccessToken(newTokenData.accessToken); // update tokens in context
 
+                    const newCsrfHeader = await this.getCsrfToken(true);
+
                     const retryOptions: RequestInit = { // RequestInit for retrying the request
                         ...options,
                         credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
                             ...options.headers,
-                            ...(csrfHeader ? { 'X-XSRF-TOKEN': csrfHeader } : {}), // add CSRF token if available
+                            ...(newCsrfHeader ? { 'X-XSRF-TOKEN': newCsrfHeader } : {}), // use the new CSRF token if available
                             'Authorization': `Bearer ${newTokenData.accessToken}`
                         }
                     };
-
                     response = await fetch(url, retryOptions);
                     console.log('Request retried with new token');
                 } else {
@@ -146,20 +149,19 @@ export class AuthService {
 
     // Login method to authenticate user
     async login(data: LoginRequest): Promise<Response> {
-        const csrfHeader = await this.getCsrfToken();
-
         try {
             const response = await fetch(API_ROUTES.auth.login, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(csrfHeader ? { 'X-XSRF-TOKEN': csrfHeader } : {}),
-
                 },
                 body: JSON.stringify(data),
             });
-            await this.getCsrfToken(true); // force refresh
+
+            if (response.ok) {
+                await authService.initializeSession();
+            }
 
             return response;
         } catch (error) {
@@ -192,7 +194,9 @@ export class AuthService {
                 method: 'POST',
             });
 
-            await this.getCsrfToken(true); // force refresh
+            if (response.ok) {
+                this.csrfToken = null;
+            }
 
             return response.ok;
         } catch (error) {

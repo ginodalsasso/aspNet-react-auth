@@ -17,8 +17,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     useEffect(() => {
         const initializeAuth = async () => {
             try {
-                await authService.getCsrfToken();
-
                 const response = await authService.refreshToken();
 
                 if (response.ok) {
