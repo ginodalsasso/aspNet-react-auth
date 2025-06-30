@@ -15,9 +15,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [csrfToken, setCsrfToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchCsrfToken = async () => {
+    const getCsrfToken = async (token: string) => {
         try {
             const response = await fetch(API_ROUTES.auth.csrfToken, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
                 credentials: "include"
             });
 
@@ -27,7 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
             const data = await response.json();
 
-            setCsrfToken(data.token);
+            setCsrfToken(data.csrfToken);
         } catch (error) {
             console.error("Failed to fetch CSRF token", error);
         }
@@ -49,7 +53,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                         setUser(userData);
                     }
 
-                    await fetchCsrfToken();
+                    await getCsrfToken(data.accessToken);
 
                 } else {
                     console.error('Failed to refresh token:', response.statusText);
@@ -70,6 +74,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (userData) {
             setUser(userData);
             setAccessTokenState(newAccessToken);
+            getCsrfToken(newAccessToken);
+
         }
     };
 
@@ -84,6 +90,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } finally {
             setUser(null);
             setAccessTokenState(null);
+            setCsrfToken(null);
         }
     };
 

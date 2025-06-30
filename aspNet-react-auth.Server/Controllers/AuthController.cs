@@ -1,11 +1,10 @@
-﻿using aspNet_react_auth.Server.Entities;
+﻿using aspNet_react_auth.Server.Attributes;
+using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Models;
 using aspNet_react_auth.Server.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Serilog;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace aspNet_react_auth.Server.Controllers
@@ -15,11 +14,11 @@ namespace aspNet_react_auth.Server.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthService _authService; // Service for handling authentication logic
+        private readonly IAuthService _authService; // handling authentication logic
         private readonly IAntiforgery _antiforgery; // Service for CSRF protection
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService authService, IAntiforgery antiforgery, ILogger<AuthController> logger)
+        public AuthController(IAuthService authService, IAntiforgery antiforgery, ILogger<AuthController> logger)  //IAntiforgery antiforgery,
         {
             _authService = authService;
             _antiforgery = antiforgery;
@@ -36,11 +35,12 @@ namespace aspNet_react_auth.Server.Controllers
         };
 
         // CSRF TOKEN ENDPOINT _____________________________________________________________________
+        [Authorize]
         [HttpGet("csrf-token")]
         public IActionResult GetCsrfToken()
         {
             var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
-            return Ok(new { token = tokens.RequestToken });
+            return Ok(new { csrfToken = tokens.RequestToken });
         }
 
         // TEST ENDPOINT _____________________________________________________________________

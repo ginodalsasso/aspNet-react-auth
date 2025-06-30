@@ -77,11 +77,12 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.HttpOnly = false;
 });
-
 // Add singleton RSA key for signing JWT tokens
 builder.Services.AddSingleton(rsa);
 
-// Register the AuthService
+// Register Services
+//builder.Services.AddMemoryCache(); 
+//builder.Services.AddScoped<ICsrfService, CsrfService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
@@ -100,6 +101,8 @@ app.UseCors(clientAddress);
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseCookiePolicy();
 
 app.UseAntiforgery();
 
