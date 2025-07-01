@@ -38,7 +38,7 @@ namespace aspNet_react_auth.Server.Services
                 return null;
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == request.Username);
             if (user is null)
             {
                 _logger.LogWarning("Login failed: no user found with username '{Username}'", request.Username);
@@ -68,7 +68,7 @@ namespace aspNet_react_auth.Server.Services
                 return (false, "Bot detected", null);
             }
 
-            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+            if (await _context.Users.AnyAsync(u => u.UserName == request.Username))
             {
                 _logger.LogWarning("Registration failed: username '{Username}' is already taken", request.Username);
                 return (false, "Username is taken", null); // User already exists  
@@ -77,7 +77,7 @@ namespace aspNet_react_auth.Server.Services
             var user = new User();
             var hashedPassword = new PasswordHasher<User>()
                 .HashPassword(user, request.Password);
-            user.Username = request.Username
+            user.UserName = request.Username
                 .ToLower()
                 .Trim();
             user.PasswordHash = hashedPassword;
@@ -85,7 +85,7 @@ namespace aspNet_react_auth.Server.Services
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("New user: {Username}", user.Username);
+            _logger.LogInformation("New user: {Username}", user.UserName);
 
             // return true if registration is successful, the error message is null, and the user object
             return (true, null, user);
@@ -143,7 +143,7 @@ namespace aspNet_react_auth.Server.Services
             var claims = new List<Claim>
             {
                 new Claim("userId", user.Id.ToString()),
-                new Claim("username", user.Username),
+                new Claim("username", user.UserName),
                 new Claim("role", user.Role),
             };
 

@@ -1,7 +1,9 @@
 using aspNet_react_auth.Server.Data;
+using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Extensions;
 using aspNet_react_auth.Server.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -9,36 +11,72 @@ using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog for logging
+// ------------------------
+// Logging (Serilog)
+// ------------------------
 builder.Host.SerilogConfiguration();
 
-// Add services to the container.
+// ------------------------
+// Load configuration files
+// ------------------------
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: true);
 
+// ------------------------
+// Register Controllers
+// ------------------------
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// ------------------------
+// OpenAPI
+// ------------------------
 builder.Services.AddOpenApi();
 
-// authorize Client and Server communication
+// ------------------------
+// CORS for React Client
+// ------------------------
 var clientAddress = "aspnet-react-chat.client";
 builder.Services.AddCors(option =>
 {
     option.AddPolicy(clientAddress, builder =>
     {
-        builder.WithOrigins("https://localhost:24233") // client address
+        builder.WithOrigins("https://localhost:24233")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
     });
 });
 
+// ------------------------
+// EF Core + SQL Server
+// ------------------------
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// ------------------------
+// Identity (User + Roles)
+// ------------------------
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+// ------------------------
+// Identity options
+// ------------------------
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+});
+
+// ------------------------
+// Load RSA key for signing JWT
+// ------------------------
 var rsa = RSA.Create();
 var privateKeyPath = Path.Combine(builder.Environment.ContentRootPath, "Keys", "private_key.pem");
 
@@ -51,11 +89,14 @@ else
 {
     throw new FileNotFoundException($"Key is not found : {privateKeyPath}");
 }
-// Add Identity services 
+
+// ------------------------
+// JWT Bearer Authentication
+// ------------------------
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidIssuer = builder.Configuration["AppSettings:Issuer"],
@@ -68,7 +109,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Configure CSRF Protection
+// ------------------------
+// CSRF Protection
+// ------------------------
 builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-XSRF-TOKEN";
@@ -77,33 +120,37 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.HttpOnly = false;
 });
-// Add singleton RSA key for signing JWT tokens
-builder.Services.AddSingleton(rsa);
 
-// Register Services
-//builder.Services.AddMemoryCache(); 
-//builder.Services.AddScoped<ICsrfService, CsrfService>();
+// ------------------------
+// App services (DI)
+// ------------------------
+// builder.Services.AddMemoryCache(); // For manual CSRF
+// builder.Services.AddScoped<ICsrfService, CsrfService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddSingleton(rsa);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ------------------------
+// Dev endpoints
+// ------------------------
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
 
+// ------------------------
+// Middleware pipeline
+// ------------------------
 app.UseHttpsRedirection();
 
 app.UseCors(clientAddress);
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.UseCookiePolicy();
-
 app.UseAntiforgery();
 
 app.MapControllers();

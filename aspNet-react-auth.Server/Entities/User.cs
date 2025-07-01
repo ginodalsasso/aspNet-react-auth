@@ -1,10 +1,12 @@
-﻿namespace aspNet_react_auth.Server.Entities
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace aspNet_react_auth.Server.Entities
 {
-    public class User
+    public class User : IdentityUser
     {
-        public Guid Id { get; set; }
-        public string Username { get; set; } = string.Empty;
-        public string PasswordHash { get; set; } = string.Empty;
+        //public Guid Id { get; set; }
+        //public string Username { get; set; } = string.Empty;
+        //public string PasswordHash { get; set; } = string.Empty;
 
         public string Role { get; set; } = "User"; // Default role
 
