@@ -13,5 +13,6 @@ namespace aspNet_react_auth.Server.Entities
         public string? RefreshToken { get; set; }
 
         public DateTime? RefreshTokenExpiryTime { get; set; }
+
     }
 }

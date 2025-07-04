@@ -56,23 +56,37 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ------------------------
-// Identity (User + Roles)
-// ------------------------
-builder.Services.AddIdentity<User, IdentityRole>()
-    .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders();
-
-// ------------------------
 // Identity options
 // ------------------------
-builder.Services.Configure<IdentityOptions>(options =>
+builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 6;
-});
+    // Password configuration
+    options.Password.RequireDigit = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 12;
+
+    // user configuration
+    options.User.RequireUniqueEmail = false;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+
+    // attempts and lockout configuration
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+
+    // signIn configuration
+    //options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+    //options.User.RequireUniqueEmail = true; // Require unique email addresses
+
+    //options.SignIn.RequireConfirmedEmail = false;
+
+
+
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
 
 // ------------------------
 // Load RSA key for signing JWT
@@ -105,9 +119,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new RsaSecurityKey(rsa),
-            ValidAlgorithms = new[] { SecurityAlgorithms.RsaSha256 }
+            ValidAlgorithms = new[] { SecurityAlgorithms.RsaSha256 },
+            ClockSkew = TimeSpan.Zero, // Reduce clock skew to prevent token expiry issues
         };
     });
+
+
+// ------------------------
+// Authorization
+// ------------------------
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin")); // Policy for Admin role ex: "AdminOnly"
+    options.AddPolicy("UserOrAdmin", policy => policy.RequireRole("User", "Admin")); // Policy for User or Admin roles ex: "UserOrAdmin"
+});
+
 
 // ------------------------
 // CSRF Protection
@@ -124,12 +150,21 @@ builder.Services.AddAntiforgery(options =>
 // ------------------------
 // App services (DI)
 // ------------------------
-// builder.Services.AddMemoryCache(); // For manual CSRF
+ builder.Services.AddMemoryCache();
 // builder.Services.AddScoped<ICsrfService, CsrfService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton(rsa);
 
 var app = builder.Build();
+
+// ------------------------
+// Seed roles
+// ------------------------
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await SeedRolesAsync(services); 
+}
 
 // ------------------------
 // Dev endpoints
@@ -156,3 +191,18 @@ app.UseAntiforgery();
 app.MapControllers();
 
 app.Run();
+
+
+async Task SeedRolesAsync(IServiceProvider serviceProvider)
+{
+    var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>(); // Get the RoleManager service
+    string[] roles = ["User", "Admin"];
+
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role)) // Check if the role already exists
+        {
+            await roleManager.CreateAsync(new IdentityRole(role)); // Create the role if it does not exist
+        }
+    }
+}

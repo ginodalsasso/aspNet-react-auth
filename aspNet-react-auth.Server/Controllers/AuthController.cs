@@ -1,11 +1,11 @@
-﻿using aspNet_react_auth.Server.Attributes;
-using aspNet_react_auth.Server.Entities;
+﻿using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Models;
 using aspNet_react_auth.Server.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace aspNet_react_auth.Server.Controllers
 {
@@ -16,12 +16,14 @@ namespace aspNet_react_auth.Server.Controllers
     {
         private readonly IAuthService _authService; // handling authentication logic
         private readonly IAntiforgery _antiforgery; // Service for CSRF protection
+        private readonly UserManager<User> _userManager;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService authService, IAntiforgery antiforgery, ILogger<AuthController> logger)  //IAntiforgery antiforgery,
+        public AuthController(IAuthService authService, IAntiforgery antiforgery, UserManager<User> userManager, ILogger<AuthController> logger)  //IAntiforgery antiforgery,
         {
             _authService = authService;
             _antiforgery = antiforgery;
+            _userManager = userManager;
             _logger = logger;
         }
 
@@ -35,7 +37,7 @@ namespace aspNet_react_auth.Server.Controllers
         };
 
         // CSRF TOKEN ENDPOINT _____________________________________________________________________
-        [Authorize]
+        [AllowAnonymous]
         [HttpGet("csrf-token")]
         public IActionResult GetCsrfToken()
         {
@@ -118,8 +120,8 @@ namespace aspNet_react_auth.Server.Controllers
                 return BadRequest(error);
             }
 
-            var userId = HttpContext.User.FindFirst("userId")?.Value;
-            if (string.IsNullOrEmpty(userId))
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("userId")?.Value; // get first userId claim or NameIdentifier claim
+            if (string.IsNullOrEmpty(userIdClaim))
             {
                 _logger.LogWarning("Logout failed: user ID not found in claims");
                 var error = new ErrorResponse
@@ -132,14 +134,14 @@ namespace aspNet_react_auth.Server.Controllers
 
             var logoutRequest = new LogoutRequestDto
             {
-                UserId = Guid.Parse(userId),
-                RefreshToken = refreshToken
+                UserId = Guid.Parse(userIdClaim), // parse the userId from the claim
+                RefreshToken = refreshToken // use the refresh token from the cookie
             };
 
             var result = await _authService.LogoutAsync(logoutRequest);
             if (!result)
             {
-                _logger.LogWarning("Logout failed: invalid logout request for user ID '{UserId}'", userId);
+                _logger.LogWarning("Logout failed: invalid logout request for user ID '{UserId}'", userIdClaim);
                 var error = new ErrorResponse
                 {
                     Message = "Logout failed",
@@ -169,21 +171,6 @@ namespace aspNet_react_auth.Server.Controllers
 
             try
             {
-                var tokenHandler = new JwtSecurityTokenHandler(); // instance of JwtSecurityTokenHandler to read the token
-                var refreshTokenDecoded = tokenHandler.ReadJwtToken(refreshToken);
-
-                var userIdClaim = refreshTokenDecoded.Claims.FirstOrDefault(x => x.Type == "userId")?.Value;
-                if (string.IsNullOrEmpty(userIdClaim))
-                {
-                    return Unauthorized("Invalid refresh token format");
-                }
-
-                var request = new RefreshTokenRequestDto
-                {
-                    UserId = Guid.Parse(userIdClaim),
-                    RefreshToken = refreshToken
-                };
-
                 var result = await _authService.RefreshTokenAsync(refreshToken);
                 if (result is null || result.AccessToken is null || result.RefreshToken is null)
                 {
