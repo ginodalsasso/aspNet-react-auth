@@ -2,6 +2,7 @@ using aspNet_react_auth.Server.Data;
 using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Extensions;
 using aspNet_react_auth.Server.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -89,6 +90,31 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // ------------------------
+// Configure Identity Cookies (minimal since we use JWT)
+// ------------------------
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "Identity.Application";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(5); // Short expiry since we use JWT
+    options.SlidingExpiration = false;
+
+    // Disable redirects for API
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = 401;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = 403;
+        return Task.CompletedTask;
+    };
+});
+
+// ------------------------
 // Load RSA key for signing JWT
 // ------------------------
 var rsa = RSA.Create();
@@ -107,23 +133,41 @@ else
 // ------------------------
 // JWT Bearer Authentication
 // ------------------------
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["AppSettings:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["AppSettings:Audience"],
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new RsaSecurityKey(rsa),
-            ValidAlgorithms = new[] { SecurityAlgorithms.RsaSha256 },
-            ClockSkew = TimeSpan.Zero, // Reduce clock skew to prevent token expiry issues
-        };
-    });
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["AppSettings:Issuer"],
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["AppSettings:Audience"],
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new RsaSecurityKey(rsa),
+        ValidAlgorithms = new[] { SecurityAlgorithms.RsaSha256 },
+        ClockSkew = TimeSpan.Zero,
+    };
 
+    // Handle JWT authentication events
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"JWT Authentication failed: {context.Exception}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine($"JWT Token validated for user: {context.Principal?.Identity?.Name}");
+            return Task.CompletedTask;
+        }
+    };
+});
 
 // ------------------------
 // Authorization
@@ -145,13 +189,13 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.SameSite = SameSiteMode.Strict;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.HttpOnly = false;
+    options.SuppressXFrameOptionsHeader = false;
 });
 
 // ------------------------
 // App services (DI)
 // ------------------------
- builder.Services.AddMemoryCache();
-// builder.Services.AddScoped<ICsrfService, CsrfService>();
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton(rsa);
 

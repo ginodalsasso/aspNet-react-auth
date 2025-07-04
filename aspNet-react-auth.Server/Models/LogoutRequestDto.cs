@@ -2,7 +2,7 @@
 {
     public class LogoutRequestDto
     {
-        public Guid UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         public required string RefreshToken { get; set; } // The refresh token to be invalidated
     }
 }

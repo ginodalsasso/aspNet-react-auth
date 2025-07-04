@@ -17,13 +17,15 @@ namespace aspNet_react_auth.Server.Controllers
         private readonly IAuthService _authService; // handling authentication logic
         private readonly IAntiforgery _antiforgery; // Service for CSRF protection
         private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService authService, IAntiforgery antiforgery, UserManager<User> userManager, ILogger<AuthController> logger)  //IAntiforgery antiforgery,
+        public AuthController(IAuthService authService, IAntiforgery antiforgery, UserManager<User> userManager, SignInManager<User> signInManager, ILogger<AuthController> logger)  //IAntiforgery antiforgery,
         {
             _authService = authService;
             _antiforgery = antiforgery;
             _userManager = userManager;
+            _signInManager = signInManager;
             _logger = logger;
         }
 
@@ -106,59 +108,71 @@ namespace aspNet_react_auth.Server.Controllers
         [Authorize]
         [HttpPost("logout")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Logout() // Logs out the user by invalidating the refresh token
+
+        public async Task<IActionResult> Logout()
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("userId")?.Value;
+            _logger.LogInformation("Logout attempt for user: {UserId}", userId);
 
-            if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken)) // get the refresh token from the cookie
+            try
             {
-                _logger.LogWarning("Logout failed: no refresh token found in cookies");
-                var error = new ErrorResponse
+                // Get refresh token from cookie
+                var hasRefreshToken = Request.Cookies.TryGetValue("refreshToken", out var refreshToken);
+
+                if (hasRefreshToken && !string.IsNullOrEmpty(refreshToken) && !string.IsNullOrEmpty(userId))
+                {
+                    _logger.LogDebug("Found refresh token for user: {UserId}, invalidating...", userId);
+
+                    var logoutRequest = new LogoutRequestDto
+                    {
+                        UserId = userId,
+                        RefreshToken = refreshToken
+                    };
+
+                    // Invalidate refresh token in database
+                    var logoutResult = await _authService.LogoutAsync(logoutRequest);
+                    if (!logoutResult)
+                    {
+                        _logger.LogWarning("Failed to invalidate refresh token for user: {UserId}", userId);
+                    }
+                }
+
+                // Sign out from Identity (clears authentication cookies)
+                await _signInManager.SignOutAsync();
+
+                // Clear refresh token cookie
+                Response.Cookies.Delete("refreshToken", new CookieOptions
+                {
+                    Path = "/api/Auth",
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict
+                });
+
+                // Clear CSRF cookie if it exists
+                if (Request.Cookies.ContainsKey("__Host-X-XSRF-TOKEN"))
+                {
+                    Response.Cookies.Delete("__Host-X-XSRF-TOKEN", new CookieOptions
+                    {
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict
+                    });
+                    _logger.LogDebug("CSRF cookie cleared for user: {UserId}", userId);
+                }
+
+                _logger.LogInformation("Logout successful for user: {UserId}", userId);
+                return Ok(new { message = "Logged out successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during logout for user: {UserId}", userId);
+                return StatusCode(500, new ErrorResponse
                 {
                     Message = "Logout failed",
-                    Details = "No refresh token found"
-                };
-                return BadRequest(error);
+                    Details = "An error occurred during logout"
+                });
             }
-
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("userId")?.Value; // get first userId claim or NameIdentifier claim
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                _logger.LogWarning("Logout failed: user ID not found in claims");
-                var error = new ErrorResponse
-                {
-                    Message = "Logout failed",
-                    Details = "Invalid user"
-                };
-                return BadRequest(error);
-            }
-
-            var logoutRequest = new LogoutRequestDto
-            {
-                UserId = Guid.Parse(userIdClaim), // parse the userId from the claim
-                RefreshToken = refreshToken // use the refresh token from the cookie
-            };
-
-            var result = await _authService.LogoutAsync(logoutRequest);
-            if (!result)
-            {
-                _logger.LogWarning("Logout failed: invalid logout request for user ID '{UserId}'", userIdClaim);
-                var error = new ErrorResponse
-                {
-                    Message = "Logout failed",
-                    Details = "Invalid logout request"
-                };
-                return Unauthorized(error);
-            }
-
-            Response.Cookies.Delete("refreshToken", new CookieOptions
-            {
-                Path = "/api/Auth",
-                Secure = true,
-                SameSite = SameSiteMode.Strict
-            });
-
-            return Ok(new { message = "Logged out successfully" });
         }
+
 
         // REFRESH TOKEN ENDPOINT _____________________________________________________________________
         [HttpPost("refresh-token")]
