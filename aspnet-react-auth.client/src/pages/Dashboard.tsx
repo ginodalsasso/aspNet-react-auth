@@ -23,6 +23,21 @@ function Dashboard() {
             console.error('Error:', error);
         }
     };
+
+    const testEmail = async () => {
+        console.log('Testing email..');
+        try {
+            const response = await authService.testEmail();
+            if (response.ok) {
+                const result = await response.text();
+                console.log('Email sent successfully:', result);
+            } else {
+                console.log('Failed to send email:', response.status);
+            }
+        } catch (error) {
+            console.error('Error sending email:', error);
+        }
+    }
     return (
         <div className="dashboard-page">
             <h1>Dashboard</h1>
@@ -35,6 +50,9 @@ function Dashboard() {
             </button>
             <button onClick={testProtected}>
                 Test Protected Route
+            </button>
+            <button onClick={testEmail}>
+                Test Email
             </button>
         </div>
 

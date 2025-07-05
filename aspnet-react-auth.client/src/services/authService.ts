@@ -15,6 +15,24 @@ export class AuthService {
 
     private authCallbacks?: AuthCallbacks;
 
+    async testEmail(): Promise<Response> {
+        try {
+            const response = await fetch(API_ROUTES.auth.testEmail, {
+                method: 'GET',
+                credentials: 'include', // include cookies in the request
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Test email error:', error);
+            return this.responseError();
+        }
+    }
+    
+
     // Method to set authentication callbacks for managing tokens and user state
     setAuthCallbacks(callbacks: AuthCallbacks) {
         this.authCallbacks = callbacks;

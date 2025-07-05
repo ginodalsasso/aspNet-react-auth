@@ -18,14 +18,23 @@ namespace aspNet_react_auth.Server.Controllers
         private readonly IAntiforgery _antiforgery; // Service for CSRF protection
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly IEmailService _emailService;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService authService, IAntiforgery antiforgery, UserManager<User> userManager, SignInManager<User> signInManager, ILogger<AuthController> logger)  //IAntiforgery antiforgery,
+        public AuthController(
+            IAuthService authService,
+            IAntiforgery antiforgery,
+            UserManager<User> userManager,
+            SignInManager<User> signInManager,
+            IEmailService emailService,
+            ILogger<AuthController> logger
+            )
         {
             _authService = authService;
             _antiforgery = antiforgery;
             _userManager = userManager;
             _signInManager = signInManager;
+            _emailService = emailService;
             _logger = logger;
         }
 
@@ -37,6 +46,14 @@ namespace aspNet_react_auth.Server.Controllers
             MaxAge = TimeSpan.FromDays(7),  // Set the cookie to expire in 7 days
             Path = "/api/Auth"              // Set the path for the cookie to be accessible only under this route 
         };
+
+        [HttpGet("test-email")]
+        public async Task<IActionResult> TestEmail()
+        {
+            await _emailService.SendEmailAsync("dalsasso.gino@gmail.com", "Test", "Ceci est un test !");
+            return Ok("Email envoyé !");
+        }
+
 
         // CSRF TOKEN ENDPOINT _____________________________________________________________________
         [AllowAnonymous]
@@ -83,6 +100,7 @@ namespace aspNet_react_auth.Server.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<TokenResponseDto>> Login(LoginRequestDto request) // Authenticates the user and returns a JWT token
         {
+            _logger.LogError("Login attempt for user: {_emailService}", _emailService.SendEmailAsync(toEmail: "dalsasso.gino@gmailcom", subject: "heloo", htmlMessage: "heeey"));
             if (!ModelState.IsValid)
             {
                 return BadRequest(new ValidationErrorResponse(ModelState));
@@ -94,7 +112,7 @@ namespace aspNet_react_auth.Server.Controllers
                 var error = new ErrorResponse
                 {
                     Message = "Login failed",
-                    Details = "Invalid username or password"
+                    Details = "Invalid login attemps"
                 };
                 return BadRequest(error);
             }

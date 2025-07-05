@@ -97,10 +97,9 @@ namespace aspNet_react_auth.Server.Services
             var user = new User
             {
                 UserName = request.Username.ToLower().Trim(),
-                //Email = request.Email.ToLower().Trim(),
+                Email = request.Email.ToLower().Trim(),
                 Role = "User" // Default role
             };
-
 
             var result = await _userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded)

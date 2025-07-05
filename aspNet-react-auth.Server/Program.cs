@@ -2,7 +2,6 @@ using aspNet_react_auth.Server.Data;
 using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Extensions;
 using aspNet_react_auth.Server.Services;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -69,7 +68,9 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequiredLength = 12;
 
     // user configuration
-    options.User.RequireUniqueEmail = false;
+    options.User.RequireUniqueEmail = true;
+    //options.SignIn.RequireConfirmedEmail = true;
+
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
 
     // attempts and lockout configuration
@@ -77,17 +78,13 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
 
-    // signIn configuration
-    //options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-    //options.User.RequireUniqueEmail = true; // Require unique email addresses
-
-    //options.SignIn.RequireConfirmedEmail = false;
-
-
-
+    // Token configuration
+    options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
+    options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultEmailProvider;
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
+
 
 // ------------------------
 // Configure Identity Cookies (minimal since we use JWT)
@@ -196,9 +193,11 @@ builder.Services.AddAntiforgery(options =>
 // ------------------------
 // App services (DI)
 // ------------------------
-builder.Services.AddMemoryCache();
-builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton(rsa);
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpContextAccessor(); // For accessing HttpContext in services
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 

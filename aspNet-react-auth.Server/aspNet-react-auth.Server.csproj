@@ -8,6 +8,7 @@
     <SpaRoot>..\aspnet-react-auth.client</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:24233</SpaProxyServerUrl>
+    <UserSecretsId>a8bf8f51-757b-48a5-8419-187bd9f820d7</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
