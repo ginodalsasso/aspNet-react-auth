@@ -110,9 +110,6 @@ namespace aspNet_react_auth.Server.Services
                 return (false, errors, null);
             }
 
-            // Add user to role
-            await _userManager.AddToRoleAsync(user, "User");
-
             _logger.LogInformation("New user registered: {Username}", user.UserName);
 
             // return true if registration is successful, the error message is null, and the user object

@@ -48,7 +48,7 @@ namespace aspNet_react_auth.Server.Controllers
         }
 
         // TEST ENDPOINT _____________________________________________________________________
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminOnly")]
         [HttpGet("test-protected-route")]
         public IActionResult TestProtectedRoute()
         {

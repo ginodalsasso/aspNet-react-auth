@@ -176,6 +176,7 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin")); // Policy for Admin role ex: "AdminOnly"
     options.AddPolicy("UserOrAdmin", policy => policy.RequireRole("User", "Admin")); // Policy for User or Admin roles ex: "UserOrAdmin"
+    options.AddPolicy("Authenticated", policy => policy.RequireAuthenticatedUser()); // Policy for authenticated users ex: "Authenticated"
 });
 
 
