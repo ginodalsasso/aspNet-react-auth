@@ -57,7 +57,7 @@ namespace aspNet_react_auth.Server.Controllers
 
         // REGISTER ENDPOINT _____________________________________________________________________
         [HttpPost("register")]
-        public async Task<ActionResult<User>> Register(UserDto request) // Registers a new user and returns the user object
+        public async Task<ActionResult<User>> Register(RegisterRequestDto request) // Registers a new user and returns the user object
         {
             if (!ModelState.IsValid)
             {
@@ -81,7 +81,7 @@ namespace aspNet_react_auth.Server.Controllers
 
         // LOGIN ENDPOINT _____________________________________________________________________
         [HttpPost("login")]
-        public async Task<ActionResult<TokenResponseDto>> Login(UserDto request) // Authenticates the user and returns a JWT token
+        public async Task<ActionResult<TokenResponseDto>> Login(LoginRequestDto request) // Authenticates the user and returns a JWT token
         {
             if (!ModelState.IsValid)
             {

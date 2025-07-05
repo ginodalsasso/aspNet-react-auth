@@ -11,9 +11,12 @@ export interface LoginError {
     username?: string;
     password?: string;
 }
+
 export interface RegisterError {
     username?: string;
+    email?: string;
     password?: string;
+    confirmPassword?: string;
 }
 
 // API Request types
@@ -24,7 +27,9 @@ export interface LoginRequest extends HoneypotField {
 
 export interface RegisterRequest extends HoneypotField {
     username: string;
+    email: string;
     password: string;
+    confirmPassword: string;
 }
 
 // API Response types
@@ -45,7 +50,9 @@ export interface LoginFormData extends HoneypotField {
 
 export interface RegisterFormData extends HoneypotField {
     username: string;
+    email: string;
     password: string;
+    confirmPassword: string;
 }
 
 export interface HoneypotField {

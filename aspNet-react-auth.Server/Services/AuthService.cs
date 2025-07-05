@@ -37,7 +37,7 @@ namespace aspNet_react_auth.Server.Services
         }
 
         // LOGIN ASYNC _________________________________________________________________
-        public async Task<TokenResponseDto?> LoginAsync(UserDto request) // Authenticates the user and returns a JWT token
+        public async Task<TokenResponseDto?> LoginAsync(LoginRequestDto request) // Authenticates the user and returns a JWT token
         {
             if (!string.IsNullOrWhiteSpace(request.Website)) // Honeypot field check
             {
@@ -52,7 +52,7 @@ namespace aspNet_react_auth.Server.Services
                 return null;
             }
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
+            var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
             if (!result.Succeeded)
             {
                 _logger.LogWarning("Login failed: incorrect username or password for username '{Username}'", request.Username);
@@ -65,7 +65,7 @@ namespace aspNet_react_auth.Server.Services
         }
 
         // REGISTER ASYNC _________________________________________________________________
-        public async Task<(bool isSuccess, string? error, User? user)> RegisterAsync(UserDto request) // Registers a new user and returns the user object
+        public async Task<(bool isSuccess, string? error, User? user)> RegisterAsync(RegisterRequestDto request) // Registers a new user and returns the user object
         {
             if (!string.IsNullOrWhiteSpace(request.Website)) // Honeypot field check
             {
@@ -73,16 +73,31 @@ namespace aspNet_react_auth.Server.Services
                 return (false, "Bot detected", null);
             }
 
-            var existingUser = await _userManager.FindByNameAsync(request.Username);
-            if (existingUser != null)
+            var existingUsername = await _userManager.FindByNameAsync(request.Username);
+            if (existingUsername != null)
             {
                 _logger.LogWarning("Registration failed: username '{Username}' is already taken", request.Username);
                 return (false, "Username is taken", null); // if user already exist
             }
 
+            var existingEmail = await _userManager.FindByEmailAsync(request.Email);
+            if (existingEmail != null)
+            {
+                _logger.LogWarning("Registration failed: email '{Email}' is already registered", request.Email);
+                return (false, "Email is already registered", null); // if email already exist
+            }
+
+            var passwordMatches = request.Password == request.ConfirmPassword;
+            if (!passwordMatches)
+            {
+                _logger.LogWarning("Registration failed: password and confirm password do not match for username '{Username}'", request.Username);
+                return (false, "Password and confirm password do not match", null);
+            }
+
             var user = new User
             {
                 UserName = request.Username.ToLower().Trim(),
+                //Email = request.Email.ToLower().Trim(),
                 Role = "User" // Default role
             };
 

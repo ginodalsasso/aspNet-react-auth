@@ -10,7 +10,9 @@ import HoneypotField from '../ui/HoneypotField';
 export default function RegisterForm() {
     const [formData, setFormData] = useState<RegisterFormData>({
         username: '',
+        email: '',
         password: '',
+        confirmPassword: '',
         website: '' // Honeypot field to detect bots
     });
 
@@ -47,7 +49,9 @@ export default function RegisterForm() {
                     setMessage(data.message);
                     setFormData({
                         username: '',
+                        email: '',
                         password: '',
+                        confirmPassword: '',
                         website: ''
                     });
                     if (response.ok) {
@@ -89,7 +93,19 @@ export default function RegisterForm() {
                     />
                     <FormErrorMessage message={errors?.username} />
                 </div>
-
+                <div>
+                    <label htmlFor="email">Email:</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        placeholder="Enter your email"
+                    />
+                    <FormErrorMessage message={errors?.email} />
+                </div>
                 <div>
                     <label htmlFor="password">Password:</label>
                     <input
@@ -103,7 +119,20 @@ export default function RegisterForm() {
                     />
                     <FormErrorMessage message={errors?.password} />
                 </div>
-
+                <div>
+                    <label htmlFor="confirmPassword">Confirm Password:</label>
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        placeholder="Confirm your password"
+                    />
+                    <FormErrorMessage message={errors?.confirmPassword} />
+                </div>
+                {/* Honeypot field to detect bots */}
                 <HoneypotField value={formData.website} onChange={handleChange} />
 
                 <button type="submit" disabled={isLoading}>
