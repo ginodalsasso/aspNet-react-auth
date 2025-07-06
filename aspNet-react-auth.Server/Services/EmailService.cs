@@ -54,4 +54,11 @@ public class EmailService : IEmailService
 
         await smtpClient.SendMailAsync(mail); // Send the email asynchronously
     }
+
+    public async Task SendConfirmationEmailAsync(string toEmail, string confirmationLink)
+    {
+        var subject = "Please confirm your email address";
+        var htmlMessage = $"<p>Thank you for registering! Please confirm your email by clicking the link below:</p><p><a href=\"{confirmationLink}\">Confirm Email</a></p>";
+        await SendEmailAsync(toEmail, subject, htmlMessage);
+    }
 }

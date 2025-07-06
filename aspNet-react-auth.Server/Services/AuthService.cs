@@ -15,6 +15,7 @@ namespace aspNet_react_auth.Server.Services
     {
         private readonly AppDbContext _context;
         private readonly UserManager<User> _userManager;
+        private readonly IEmailService _emailService;
         private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _configuration;
         private readonly RSA _rsa;
@@ -24,13 +25,16 @@ namespace aspNet_react_auth.Server.Services
             AppDbContext context,
             UserManager<User> userManager,
             SignInManager<User> signInManager,
+            IEmailService emailService,
             IConfiguration configuration,
             RSA rsa,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger
+            )
         {
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
+            _emailService = emailService;
             _configuration = configuration;
             _rsa = rsa;
             _logger = logger;
@@ -109,10 +113,36 @@ namespace aspNet_react_auth.Server.Services
                 return (false, errors, null);
             }
 
+            await ProcessEmailConfirmationAsync(user);
+
             _logger.LogInformation("New user registered: {Username}", user.UserName);
 
             // return true if registration is successful, the error message is null, and the user object
             return (true, null, user);
+        }
+
+        // SENDREGISTRED EMAIL ASYNC _________________________________________________________________
+        private async Task ProcessEmailConfirmationAsync(User user)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(user.Email))
+                {
+                    _logger.LogError("Cannot send registration email: user email is null or empty for user '{UserName}'", user.UserName);
+                    throw new ArgumentException("User email cannot be null or empty.", nameof(user.Email));
+                }
+
+                var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var encodedToken = Uri.EscapeDataString(confirmationToken); // Encode the token to ensure it's safe for URLs
+                var confirmationLink = $"{_configuration["AppSettings:ClientUrl"]}/confirm-email?userId={user.Id}&token={encodedToken}";
+
+                await _emailService.SendConfirmationEmailAsync(user.Email, confirmationLink);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while sending registration email for user '{UserName}'", user.UserName);
+                throw;
+            }
         }
 
         // LOGOUT ASYNC _________________________________________________________________

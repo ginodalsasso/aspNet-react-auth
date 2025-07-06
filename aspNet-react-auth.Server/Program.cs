@@ -69,7 +69,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 
     // user configuration
     options.User.RequireUniqueEmail = true;
-    //options.SignIn.RequireConfirmedEmail = true;
+    options.SignIn.RequireConfirmedEmail = true;
 
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
 
