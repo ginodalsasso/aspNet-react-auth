@@ -1,4 +1,5 @@
-﻿using aspNet_react_auth.Server.Data;
+﻿using aspNet_react_auth.Server.Common;
+using aspNet_react_auth.Server.Data;
 using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Models;
 using Microsoft.AspNetCore.Identity;
@@ -41,31 +42,39 @@ namespace aspNet_react_auth.Server.Services
         }
 
         // LOGIN ASYNC _________________________________________________________________
-        public async Task<TokenResponseDto?> LoginAsync(LoginRequestDto request) // Authenticates the user and returns a JWT token
+        public async Task<ResultResponse<TokenResponseDto>> LoginAsync(LoginRequestDto request) // Authenticates the user and returns a JWT token
         {
             if (!string.IsNullOrWhiteSpace(request.Website)) // Honeypot field check
             {
                 _logger.LogWarning("Bot detected: honeypot field filled (Website: '{Website}')", request.Website);
-                return null;
+                return ResultResponse<TokenResponseDto>.Fail("Bot detected");
             }
 
             var user = await _userManager.FindByNameAsync(request.Username);
             if (user is null)
             {
                 _logger.LogWarning("Login failed: no user found with username '{Username}'", request.Username);
-                return null;
+                return ResultResponse<TokenResponseDto>.Fail("Invalid credentials");
             }
 
+            var isEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
+            if (!isEmailConfirmed)
+            {
+                _logger.LogWarning("Login failed: email not confirmed for user '{Username}'", user.UserName);
+                return ResultResponse<TokenResponseDto>.Fail("Email not confirmed");
+            }
+            
             var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
             if (!result.Succeeded)
             {
                 _logger.LogWarning("Login failed: incorrect username or password for username '{Username}'", request.Username);
-                return null;
+                return ResultResponse<TokenResponseDto>.Fail("Invalid credentials");
             }
+
 
             TokenResponseDto response = await CreateTokenResponse(user);
 
-            return response;
+            return ResultResponse<TokenResponseDto>.Ok(response);
         }
 
         // REGISTER ASYNC _________________________________________________________________
@@ -145,6 +154,7 @@ namespace aspNet_react_auth.Server.Services
             }
         }
 
+        // CONFIRM EMAIL ASYNC _________________________________________________________________
         public async Task<bool> ConfirmEmailAsync(ConfirmEmailRequestDto request) // Confirms the user's email
         {
             _logger.LogInformation("ConfirmEmailAsync {request}", request);

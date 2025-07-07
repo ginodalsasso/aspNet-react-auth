@@ -1,4 +1,5 @@
-﻿using aspNet_react_auth.Server.Entities;
+﻿using aspNet_react_auth.Server.Common;
+using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Models;
 using aspNet_react_auth.Server.Services;
 using Microsoft.AspNetCore.Antiforgery;
@@ -129,19 +130,18 @@ namespace aspNet_react_auth.Server.Controllers
             }
 
             var result = await _authService.LoginAsync(request);
-            if (result is null)
+            if (!result.Success)
             {
-                var error = new ErrorResponse
+                return BadRequest(new ErrorResponse
                 {
                     Message = "Login failed",
-                    Details = "Invalid login attemps"
-                };
-                return BadRequest(error);
+                    Details = result.Error
+                });
             }
 
-            Response.Cookies.Append("refreshToken", result.RefreshToken, _refreshTokenCookieOptions);
+            Response.Cookies.Append("refreshToken", result.Data!.RefreshToken, _refreshTokenCookieOptions);
 
-            return Ok(new { accessToken = result.AccessToken });
+            return Ok(new { accessToken = result.Data.AccessToken });
         }
 
         // LOGOUT ENDPOINT _____________________________________________________________________

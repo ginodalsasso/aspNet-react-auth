@@ -1,5 +1,6 @@
 ﻿import API_ROUTES from '../lib/constants/routes';
 import type {
+    ConfirmEmailRequest,
     LoginRequest,
     RegisterRequest,
 } from '../lib/types/auth';
@@ -14,24 +15,6 @@ interface AuthCallbacks {
 export class AuthService {
 
     private authCallbacks?: AuthCallbacks;
-
-    async testEmail(): Promise<Response> {
-        try {
-            const response = await fetch(API_ROUTES.auth.testEmail, {
-                method: 'GET',
-                credentials: 'include', // include cookies in the request
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            return response;
-        } catch (error) {
-            console.error('Test email error:', error);
-            return this.responseError();
-        }
-    }
-    
 
     // Method to set authentication callbacks for managing tokens and user state
     setAuthCallbacks(callbacks: AuthCallbacks) {
@@ -163,6 +146,23 @@ export class AuthService {
             return response;
         } catch (error) {
             console.error('Registration error:', error);
+            return this.responseError();
+        }
+    }
+
+    async confirmEmail(data: ConfirmEmailRequest): Promise<Response> {
+        try {
+            const response = await fetch(`${API_ROUTES.auth.confirmEmail}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Confirm email error:', error);
             return this.responseError();
         }
     }

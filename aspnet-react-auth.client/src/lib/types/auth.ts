@@ -32,6 +32,15 @@ export interface RegisterRequest extends HoneypotField {
     confirmPassword: string;
 }
 
+export interface ConfirmEmailRequest {
+    userId: string;
+    token: string; // Email confirmation token
+}
+
+export interface ConfirmEmailResponse {
+    message: string; // Confirmation message
+}
+
 // API Response types
 export interface TokenResponse {
     accessToken: string;

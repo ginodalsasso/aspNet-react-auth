@@ -1,4 +1,5 @@
-﻿using aspNet_react_auth.Server.Entities;
+﻿using aspNet_react_auth.Server.Common;
+using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Models;
 
 namespace aspNet_react_auth.Server.Services
@@ -10,7 +11,7 @@ namespace aspNet_react_auth.Server.Services
         // Confirms the user's email address
         Task<bool> ConfirmEmailAsync(ConfirmEmailRequestDto request);
         // Authenticates the user and returns a JWT token
-        Task<TokenResponseDto?> LoginAsync(LoginRequestDto request);
+        Task<ResultResponse<TokenResponseDto>> LoginAsync(LoginRequestDto request);
         // Logs out the user by invalidating the refresh token
         Task<bool> LogoutAsync(LogoutRequestDto request);
         // Creates a JWT token for the user

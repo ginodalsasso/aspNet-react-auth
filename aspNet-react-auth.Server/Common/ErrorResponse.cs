@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace aspNet_react_auth.Server.Models
+namespace aspNet_react_auth.Server.Common
 {
     public class ErrorResponse
     {
