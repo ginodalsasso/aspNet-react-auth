@@ -5,13 +5,9 @@ namespace aspNet_react_auth.Server.Models
     public class ConfirmEmailRequestDto
     {
         [Required]
-        public required string UserId { get; set; } = string.Empty;
+        public required string UserId { get; set; }
 
         [Required]
-        public required string Token { get; set; } = string.Empty;
-
-        [Required]
-        [EmailAddress]
-        public required string Email { get; set; } = string.Empty;
+        public required string Token { get; set; }
     }
 }

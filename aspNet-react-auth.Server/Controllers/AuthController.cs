@@ -96,6 +96,28 @@ namespace aspNet_react_auth.Server.Controllers
             return Ok(new { message = "Registration successful" });
         }
 
+        // CONFIRM EMAIL ENDPOINT _____________________________________________________________________
+        [HttpPost("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(ConfirmEmailRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ValidationErrorResponse(ModelState));
+            }
+
+            var result = await _authService.ConfirmEmailAsync(request);
+            if (!result)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    Message = "Email confirmation failed",
+                    Details = "Invalid token or user ID"
+                });
+            }
+
+            return Ok(new { message = "Email confirmed successfully" });
+        }
+
         // LOGIN ENDPOINT _____________________________________________________________________
         [HttpPost("login")]
         public async Task<ActionResult<TokenResponseDto>> Login(LoginRequestDto request) // Authenticates the user and returns a JWT token

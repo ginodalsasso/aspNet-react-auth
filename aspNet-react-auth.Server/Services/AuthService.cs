@@ -145,6 +145,35 @@ namespace aspNet_react_auth.Server.Services
             }
         }
 
+        public async Task<bool> ConfirmEmailAsync(ConfirmEmailRequestDto request) // Confirms the user's email
+        {
+            _logger.LogInformation("ConfirmEmailAsync {request}", request);
+
+            if (request is null)
+            {
+                _logger.LogWarning("ConfirmEmailAsync failed: request is null");
+                return false;
+            }
+
+            var user = await _userManager.FindByIdAsync(request.UserId.ToString());
+            if (user is null)
+            {
+                _logger.LogWarning("ConfirmEmailAsync failed: user not found for user ID '{UserId}'", request.UserId);
+                return false;
+            }
+
+            var result = await _userManager.ConfirmEmailAsync(user, request.Token);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                _logger.LogWarning("ConfirmEmailAsync failed for user ID '{UserId}': {Errors}", request.UserId, errors);
+                return false;
+            }
+
+            _logger.LogInformation("Email confirmed successfully for user ID '{UserId}'", request.UserId);
+            return true;
+        }
+
         // LOGOUT ASYNC _________________________________________________________________
         public async Task<bool> LogoutAsync(LogoutRequestDto request) // Logs out the user by invalidating the refresh token
         {
