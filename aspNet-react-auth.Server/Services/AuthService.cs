@@ -63,14 +63,13 @@ namespace aspNet_react_auth.Server.Services
                 _logger.LogWarning("Login failed: email not confirmed for user '{Username}'", user.UserName);
                 return ResultResponse<TokenResponseDto>.Fail("Email not confirmed");
             }
-            
+
             var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
             if (!result.Succeeded)
             {
                 _logger.LogWarning("Login failed: incorrect username or password for username '{Username}'", request.Username);
                 return ResultResponse<TokenResponseDto>.Fail("Invalid credentials");
             }
-
 
             TokenResponseDto response = await CreateTokenResponse(user);
 
