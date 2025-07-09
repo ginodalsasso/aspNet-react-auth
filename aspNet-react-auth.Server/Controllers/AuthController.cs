@@ -79,18 +79,17 @@ namespace aspNet_react_auth.Server.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var validationErrors = new ValidationErrorResponse(ModelState);
-                return BadRequest(validationErrors); // Return validation errors if the model state is invalid
+                return BadRequest(new ValidationErrorResponse(ModelState));
             }
 
-            var (isSuccess, error, user) = await _authService.RegisterAsync(request);
+            var result = await _authService.RegisterAsync(request);
 
-            if (!isSuccess)
+            if (!result.Success)
             {
                 return BadRequest(new ErrorResponse
                 {
                     Message = "Register failed",
-                    Details = error
+                    Details = result.Error
                 });
             }
 
@@ -123,7 +122,6 @@ namespace aspNet_react_auth.Server.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<TokenResponseDto>> Login(LoginRequestDto request) // Authenticates the user and returns a JWT token
         {
-            _logger.LogError("Login attempt for user: {_emailService}", _emailService.SendEmailAsync(toEmail: "dalsasso.gino@gmailcom", subject: "heloo", htmlMessage: "heeey"));
             if (!ModelState.IsValid)
             {
                 return BadRequest(new ValidationErrorResponse(ModelState));

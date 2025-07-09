@@ -2,6 +2,7 @@
 using aspNet_react_auth.Server.Data;
 using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Models;
+using Azure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -77,33 +78,33 @@ namespace aspNet_react_auth.Server.Services
         }
 
         // REGISTER ASYNC _________________________________________________________________
-        public async Task<(bool isSuccess, string? error, User? user)> RegisterAsync(RegisterRequestDto request) // Registers a new user and returns the user object
+        public async Task<ResultResponse<bool>> RegisterAsync(RegisterRequestDto request) // Registers a new user and returns the user object
         {
             if (!string.IsNullOrWhiteSpace(request.Website)) // Honeypot field check
             {
                 _logger.LogWarning("Bot detected: honeypot field filled (Website: '{Website}')", request.Website);
-                return (false, "Bot detected", null);
+                return ResultResponse<bool>.Fail("Bot detected");
             }
 
             var existingUsername = await _userManager.FindByNameAsync(request.Username);
             if (existingUsername != null)
             {
                 _logger.LogWarning("Registration failed: username '{Username}' is already taken", request.Username);
-                return (false, "Username is taken", null); // if user already exist
+                return ResultResponse<bool>.Fail("Username is already taken"); // if user already exist
             }
 
             var existingEmail = await _userManager.FindByEmailAsync(request.Email);
             if (existingEmail != null)
             {
                 _logger.LogWarning("Registration failed: email '{Email}' is already registered", request.Email);
-                return (false, "Email is already registered", null); // if email already exist
+                return ResultResponse<bool>.Fail("Email is already registered"); // if email already exist
             }
 
             var passwordMatches = request.Password == request.ConfirmPassword;
             if (!passwordMatches)
             {
                 _logger.LogWarning("Registration failed: password and confirm password do not match for username '{Username}'", request.Username);
-                return (false, "Password and confirm password do not match", null);
+                return ResultResponse<bool>.Fail("Password and confirm password do not match");
             }
 
             var user = new User
@@ -118,15 +119,14 @@ namespace aspNet_react_auth.Server.Services
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                 _logger.LogWarning("Registration failed for username '{Username}': {Errors}", request.Username, errors);
-                return (false, errors, null);
+                return ResultResponse<bool>.Fail(errors);
             }
 
             await ProcessEmailConfirmationAsync(user);
 
             _logger.LogInformation("New user registered: {Username}", user.UserName);
 
-            // return true if registration is successful, the error message is null, and the user object
-            return (true, null, user);
+            return ResultResponse<bool>.Ok(true);
         }
 
         // SENDREGISTRED EMAIL ASYNC _________________________________________________________________

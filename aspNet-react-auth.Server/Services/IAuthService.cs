@@ -7,7 +7,7 @@ namespace aspNet_react_auth.Server.Services
     public interface IAuthService
     {
         // Registers a new user and returns the user object
-        Task<(bool isSuccess, string? error, User? user)> RegisterAsync(RegisterRequestDto request);
+        Task<ResultResponse<bool>> RegisterAsync(RegisterRequestDto request);
         // Confirms the user's email address
         Task<bool> ConfirmEmailAsync(ConfirmEmailRequestDto request);
         // Authenticates the user and returns a JWT token
