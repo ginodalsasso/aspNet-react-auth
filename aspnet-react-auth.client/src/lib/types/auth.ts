@@ -1,3 +1,6 @@
+// =======================
+// User & Auth Types
+// =======================
 
 export interface User {
     id: string;
@@ -6,7 +9,37 @@ export interface User {
     exp: number;
 }
 
-// Error types
+export interface JWTPayload {
+    userId: string;
+    username: string;
+    role: string;
+    exp: number;
+    iat?: number;
+    iss?: string;
+    aud?: string;
+}
+
+export interface AuthContextType {
+    user: User | null;
+    accessToken: string | null;
+    loading: boolean;
+    csrfToken: string | null;
+    setAccessToken: (accessToken: string) => void;
+    clearAuth: () => void;
+}
+
+// =======================
+// Shared & Utility Types
+// =======================
+
+export interface HoneypotField {
+    website: string; // Honeypot field to detect bots
+}
+
+// =======================
+// Error Types
+// =======================
+
 export interface LoginError {
     username?: string;
     password?: string;
@@ -19,7 +52,14 @@ export interface RegisterError {
     confirmPassword?: string;
 }
 
-// API Request types
+export interface ForgotPasswordError {
+    email?: string;
+}
+
+// =======================
+// API Request Types
+// =======================
+
 export interface LoginRequest extends HoneypotField {
     username: string;
     password: string;
@@ -32,16 +72,19 @@ export interface RegisterRequest extends HoneypotField {
     confirmPassword: string;
 }
 
+export interface ForgotPasswordRequest extends HoneypotField {
+    email: string;
+}
+
 export interface ConfirmEmailRequest {
     userId: string;
-    token: string; // Email confirmation token
+    token: string;
 }
 
-export interface ConfirmEmailResponse {
-    message: string; // Confirmation message
-}
+// =======================
+// API Response Types
+// =======================
 
-// API Response types
 export interface TokenResponse {
     accessToken: string;
     refreshToken: string;
@@ -51,45 +94,10 @@ export interface RegisterResponse {
     message: string;
 }
 
-// Form validation types
-export interface LoginFormData extends HoneypotField {
-    username: string;
-    password: string;
+export interface ConfirmEmailResponse {
+    message: string;
 }
 
-export interface RegisterFormData extends HoneypotField {
-    username: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-}
-
-export interface HoneypotField {
-    website: string; // Honeypot field to detect bots
-}
-
-
-export interface JWTPayload {
-    userId: string;
-    username: string;
-    role: string;
-    exp: number;
-    iat?: number;
-    iss?: string;
-    aud?: string;
-}
-
-// Protected route props
-export interface ProtectedRouteProps {
-    children: React.ReactNode;
-    requiredRole?: string;
-}
-
-export interface AuthContextType {
-    user: User | null;
-    accessToken: string | null;          // JWT access token
-    loading: boolean;                    // Loading state during initialization
-    setAccessToken: (accessToken: string) => void; 
-    clearAuth: () => void;               // Function to logout user
-    csrfToken: string | null;           // CSRF token for secure requests
+export interface ForgotPasswordResponse {
+    message: string;
 }

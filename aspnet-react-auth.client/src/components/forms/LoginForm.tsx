@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import FormErrorMessage from '../ui/FormErrorMessage';
-import type { LoginError, LoginFormData, TokenResponse } from '../../lib/types/auth';
+import type { LoginError, LoginRequest, TokenResponse } from '../../lib/types/auth';
 import { authService } from '../../services/authService';
 import handleApiResponse from '../../lib/utils/handleApiResponse';
 import { parseJWT } from '../../lib/utils/jwtUtils';
@@ -10,7 +10,7 @@ import LoadingSpinner from '../layout/LoadingSpinner';
 import HoneypotField from '../ui/HoneypotField';
 
 export default function LoginForm() {
-    const [formData, setFormData] = useState<LoginFormData>({
+    const [formData, setFormData] = useState<LoginRequest>({
         username: '',
         password: '',
         website: '' // Hidden field for honeypot

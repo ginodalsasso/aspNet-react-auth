@@ -146,7 +146,6 @@ namespace aspNet_react_auth.Server.Controllers
         [Authorize]
         [HttpPost("logout")]
         [ValidateAntiForgeryToken]
-
         public async Task<IActionResult> Logout()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("userId")?.Value;

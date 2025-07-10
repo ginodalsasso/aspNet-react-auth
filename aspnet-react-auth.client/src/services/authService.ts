@@ -1,6 +1,7 @@
 ﻿import API_ROUTES from '../lib/constants/routes';
 import type {
     ConfirmEmailRequest,
+    ForgotPasswordRequest,
     LoginRequest,
     RegisterRequest,
 } from '../lib/types/auth';
@@ -176,6 +177,23 @@ export class AuthService {
         } catch (error) {
             console.error('Logout error:', error);
             return false;
+        }
+    }
+
+    async forgotPassword(data: ForgotPasswordRequest): Promise<Response> {
+        try {
+            const response = await fetch(`${API_ROUTES.auth.forgotPassword}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data }),
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Forgot password error:', error);
+            return this.responseError();
         }
     }
 

@@ -1,14 +1,14 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import FormErrorMessage from '../ui/FormErrorMessage';
 import handleApiResponse from '../../lib/utils/handleApiResponse';
-import type { RegisterError, RegisterFormData, RegisterResponse } from '../../lib/types/auth';
+import type { RegisterError, RegisterRequest, RegisterResponse } from '../../lib/types/auth';
 import { authService } from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../layout/LoadingSpinner';
 import HoneypotField from '../ui/HoneypotField';
 
 export default function RegisterForm() {
-    const [formData, setFormData] = useState<RegisterFormData>({
+    const [formData, setFormData] = useState<RegisterRequest>({
         username: '',
         email: '',
         password: '',

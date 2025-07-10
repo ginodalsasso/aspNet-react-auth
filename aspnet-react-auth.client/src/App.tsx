@@ -13,6 +13,7 @@ import { useAuth } from './hooks/useAuth';
 import Dashboard from './pages/Dashboard';
 import LoadingSpinner from './components/layout/LoadingSpinner';
 import ConfirmEmail from './pages/ConfirmEmail';
+import ForgotPassword from './pages/ForgotPassword';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, loading } = useAuth();
@@ -50,7 +51,8 @@ function App() {
                     {/* Public routes */}
                     <Route path="/register" element={<PublicRoute> <Register /> </PublicRoute>} />
                     <Route path="/login" element={<PublicRoute> <Login /> </PublicRoute>} />
-                    
+                    <Route path="/forgot-password" element={<PublicRoute> <ForgotPassword /> </PublicRoute>} />
+
                     {/* Email confirmation route */}
                     <Route path="/confirm-email" element={<PublicRoute> <ConfirmEmail /> </PublicRoute>} />
 

@@ -258,7 +258,7 @@ namespace aspNet_react_auth.Server.Services
             {
                 claims.Add(new Claim("role", user.Role));
             }
-
+            
             // Create a symmetric security key using the secret key from configuration
             var key = new RsaSecurityKey(_rsa);
 
