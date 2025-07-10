@@ -41,6 +41,30 @@ namespace aspNet_react_auth.Server.Services
             _rsa = rsa;
             _logger = logger;
         }
+        
+        // PROCESS USER EMAIL ASYNC _________________________________________________________________
+        private async Task ProcessUserEmailAsync(User user, Func<User, Task<string>> generateTokenAsync, string redirectPath, Func<string, string, Task> sendEmailAsync)
+        {
+            if (string.IsNullOrWhiteSpace(user.Email))
+            {
+                _logger.LogError("Cannot send email: user email is null or empty for user '{UserName}'", user.UserName);
+                throw new ArgumentException("User email cannot be null or empty.", nameof(user.Email));
+            }
+
+            try
+            {
+                var token = await generateTokenAsync(user);
+                var encodedToken = Uri.EscapeDataString(token); // Encode the token to ensure it's safe for URLs
+                var confirmationLink = $"{_configuration["AppSettings:ClientUrl"]}/{redirectPath}?userId={user.Id}&token={encodedToken}";
+
+                await sendEmailAsync(user.Email, confirmationLink);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while processing email for user '{UserName}'", user.UserName);
+                throw;
+            }
+        }
 
         // LOGIN ASYNC _________________________________________________________________
         public async Task<ResultResponse<TokenResponseDto>> LoginAsync(LoginRequestDto request) // Authenticates the user and returns a JWT token
@@ -122,35 +146,16 @@ namespace aspNet_react_auth.Server.Services
                 return ResultResponse<bool>.Fail(errors);
             }
 
-            await ProcessEmailConfirmationAsync(user);
+            await ProcessUserEmailAsync(
+                user,
+                _userManager.GenerateEmailConfirmationTokenAsync, // Generate email confirmation token
+                "confirm-email", // Redirect path for email confirmation
+                _emailService.SendConfirmationEmailAsync // Send confirmation email
+            );
 
             _logger.LogInformation("New user registered: {Username}", user.UserName);
 
             return ResultResponse<bool>.Ok(true);
-        }
-
-        // SENDREGISTRED EMAIL ASYNC _________________________________________________________________
-        private async Task ProcessEmailConfirmationAsync(User user)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(user.Email))
-                {
-                    _logger.LogError("Cannot send registration email: user email is null or empty for user '{UserName}'", user.UserName);
-                    throw new ArgumentException("User email cannot be null or empty.", nameof(user.Email));
-                }
-
-                var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                var encodedToken = Uri.EscapeDataString(confirmationToken); // Encode the token to ensure it's safe for URLs
-                var confirmationLink = $"{_configuration["AppSettings:ClientUrl"]}/confirm-email?userId={user.Id}&token={encodedToken}";
-
-                await _emailService.SendConfirmationEmailAsync(user.Email, confirmationLink);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error while sending registration email for user '{UserName}'", user.UserName);
-                throw;
-            }
         }
 
         // CONFIRM EMAIL ASYNC _________________________________________________________________
@@ -191,6 +196,7 @@ namespace aspNet_react_auth.Server.Services
             var user = await _userManager.FindByIdAsync(request.UserId.ToString());
             if (user is null)
             {
+
                 _logger.LogWarning("Logout failed: user not found for user ID '{UserId}'", request.UserId);
                 return false;
             }
@@ -215,6 +221,42 @@ namespace aspNet_react_auth.Server.Services
             return true;
         }
 
+
+        // FORGOT PASSWORD ASYNC _________________________________________________________________
+        public async Task<ResultResponse<bool>> ForgotPasswordAsync(ForgotPasswordRequestDto request) // Sends a password reset email to the user
+        {
+            if (!string.IsNullOrWhiteSpace(request.Website)) // Honeypot field check
+            {
+                _logger.LogWarning("Bot detected: honeypot field filled (Website: '{Website}')", request.Website);
+                return ResultResponse<bool>.Fail("Bot detected");
+            }
+
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user is null)
+            {
+                _logger.LogWarning("Forgot password failed: no user found with email '{Email}'", request.Email);
+                return ResultResponse<bool>.Fail("User not found");
+            }
+
+            var isEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
+            if (!isEmailConfirmed)
+            {
+                _logger.LogWarning("Forgot password failed: email not confirmed for user '{Email}'", request.Email);
+                return ResultResponse<bool>.Fail("Email not confirmed");
+            }
+
+            // Process the user's email for password reset
+            await ProcessUserEmailAsync(
+                user,
+                _userManager.GeneratePasswordResetTokenAsync, // Generate password reset token
+                "reset-password", // Redirect path for password reset
+                _emailService.SendPasswordResetEmailAsync // Send password reset email
+            );
+
+            _logger.LogInformation("Password reset email sent to {Email}", user.Email);
+
+            return ResultResponse<bool>.Ok(true);
+        }
 
         // TOKEN 
         // CREATE JWT TOKEN _________________________________________________________________

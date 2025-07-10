@@ -61,4 +61,11 @@ public class EmailService : IEmailService
         var htmlMessage = $"<p>Thank you for registering! Please confirm your email by clicking the link below:</p><p><a href=\"{confirmationLink}\">Confirm Email</a></p>";
         await SendEmailAsync(toEmail, subject, htmlMessage);
     }
+
+    public async Task SendPasswordResetEmailAsync(string toEmail, string resetLink)
+    {
+        var subject = "Password Reset Request";
+        var htmlMessage = $"<p>We received a request to reset your password. Click the link below to reset it:</p><p><a href=\"{resetLink}\">Reset Password</a></p>";
+        await SendEmailAsync(toEmail, subject, htmlMessage);
+    }
 }

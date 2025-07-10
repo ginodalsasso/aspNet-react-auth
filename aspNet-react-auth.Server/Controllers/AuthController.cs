@@ -210,7 +210,30 @@ namespace aspNet_react_auth.Server.Controllers
             }
         }
 
+        // FORGOT PASSWORD ENDPOINT _____________________________________________________________________
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordRequestDto request)
+        {
+            _logger.LogWarning("Forgot password request for email: {Email}", request.Email);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ValidationErrorResponse(ModelState));
+            }
+            
+            var result = await _authService.ForgotPasswordAsync(request);
+            if (!result.Success)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    Message = "Forgot password failed",
 
+                    Details = result.Error
+                });
+            }
+            
+            return Ok(new { message = "Password reset link sent to your email" });
+        }
+    
         // REFRESH TOKEN ENDPOINT _____________________________________________________________________
         [HttpPost("refresh-token")]
         public async Task<ActionResult<object>> RefreshToken()

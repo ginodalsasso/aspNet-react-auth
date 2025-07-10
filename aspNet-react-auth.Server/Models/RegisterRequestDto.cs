@@ -12,6 +12,7 @@ namespace aspNet_react_auth.Server.Models
 
         [Required]
         [EmailAddress(ErrorMessage = "Invalid email address")]
+        [StringLength(256, ErrorMessage = "Email address cannot exceed 256 characters.")]
         public string Email { get; set; } = string.Empty;
 
         [Required]

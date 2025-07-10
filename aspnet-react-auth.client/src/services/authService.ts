@@ -187,9 +187,9 @@ export class AuthService {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ data }),
+                body: JSON.stringify(data),
             });
-
+            
             return response;
         } catch (error) {
             console.error('Forgot password error:', error);

@@ -4,4 +4,5 @@ public interface IEmailService
 {
     Task SendEmailAsync(string toEmail, string subject, string htmlMessage);
     Task SendConfirmationEmailAsync(string toEmail, string confirmationLink);
+    Task SendPasswordResetEmailAsync(string toEmail, string resetLink);
 }

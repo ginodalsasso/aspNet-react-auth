@@ -5,7 +5,7 @@ import { authService } from '../../services/authService';
 import handleApiResponse from '../../lib/utils/handleApiResponse';
 import { parseJWT } from '../../lib/utils/jwtUtils';
 import { useAuth } from '../../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../layout/LoadingSpinner';
 import HoneypotField from '../ui/HoneypotField';
 
@@ -124,10 +124,12 @@ export default function LoginForm() {
 
                 <HoneypotField value={formData.website} onChange={handleChange} />
 
+
                 <button type="submit" disabled={isLoading}>
                     {isLoading ? ' Loading...' : 'Login'}
                 </button>
             </form>
+            <Link to="/forgot-password">Forgot password?</Link>
         </div>
     );
 }
