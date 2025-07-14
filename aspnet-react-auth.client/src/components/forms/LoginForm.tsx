@@ -103,6 +103,8 @@ export default function LoginForm() {
                         onChange={handleChange}
                         disabled={isLoading}
                         placeholder="Enter your username"
+                        autoComplete="username"
+                        required
                     />
                     <FormErrorMessage message={errors?.username} />
 
@@ -118,6 +120,8 @@ export default function LoginForm() {
                         onChange={handleChange}
                         disabled={isLoading}
                         placeholder="Enter your password"
+                        autoComplete="current-password"
+                        required
                     />
                     <FormErrorMessage message={errors?.password} />
                 </div>

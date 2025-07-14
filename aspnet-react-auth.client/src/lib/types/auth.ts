@@ -56,6 +56,11 @@ export interface ForgotPasswordError {
     email?: string;
 }
 
+export interface ResetPasswordError {
+    newPassword?: string;
+    confirmPassword?: string;
+}
+
 // =======================
 // API Request Types
 // =======================
@@ -74,6 +79,11 @@ export interface RegisterRequest extends HoneypotField {
 
 export interface ForgotPasswordRequest extends HoneypotField {
     email: string;
+}
+
+export interface ResetPasswordRequest extends HoneypotField {
+    newPassword: string;
+    confirmPassword: string;
 }
 
 export interface ConfirmEmailRequest {
@@ -99,5 +109,9 @@ export interface ConfirmEmailResponse {
 }
 
 export interface ForgotPasswordResponse {
+    message: string;
+}
+
+export interface ResetPasswordResponse {
     message: string;
 }

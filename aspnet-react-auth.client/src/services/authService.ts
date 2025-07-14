@@ -4,6 +4,7 @@ import type {
     ForgotPasswordRequest,
     LoginRequest,
     RegisterRequest,
+    ResetPasswordRequest,
 } from '../lib/types/auth';
 
 interface AuthCallbacks {
@@ -193,6 +194,23 @@ export class AuthService {
             return response;
         } catch (error) {
             console.error('Forgot password error:', error);
+            return this.responseError();
+        }
+    }
+
+    async resetPassword(data: ResetPasswordRequest): Promise<Response> {
+        try {
+            const response = await fetch(`${API_ROUTES.auth.resetPassword}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Reset password error:', error);
             return this.responseError();
         }
     }
