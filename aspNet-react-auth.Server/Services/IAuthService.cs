@@ -1,6 +1,6 @@
 ﻿using aspNet_react_auth.Server.Common;
-using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Models;
+using aspNetReactAuth.Server.Models;
 
 namespace aspNet_react_auth.Server.Services
 {
@@ -16,6 +16,8 @@ namespace aspNet_react_auth.Server.Services
         Task<bool> LogoutAsync(LogoutRequestDto request);
         // Sends a password reset email to the user
         Task<ResultResponse<bool>> ForgotPasswordAsync(ForgotPasswordRequestDto request);
+        // Resets the user's password
+        Task<ResultResponse<bool>> ResetPasswordAsync(ResetPasswordRequestDto request);
         // Creates a JWT token for the user
         Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken);
     }

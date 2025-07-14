@@ -2,7 +2,7 @@
 using aspNet_react_auth.Server.Data;
 using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Models;
-using Azure;
+using aspNetReactAuth.Server.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -257,6 +257,35 @@ namespace aspNet_react_auth.Server.Services
 
             return ResultResponse<bool>.Ok(true);
         }
+
+        // RESET PASSWORD ASYNC _________________________________________________________________
+        public async Task<ResultResponse<bool>> ResetPasswordAsync(ResetPasswordRequestDto request)
+        {
+            if (!string.IsNullOrWhiteSpace(request.Website)) // Honeypot field check
+            {
+                _logger.LogWarning("Bot detected: honeypot field filled (Website: '{Website}')", request.Website);
+                return ResultResponse<bool>.Fail("Bot detected");
+            }
+
+            var user = await _userManager.FindByIdAsync(request.UserId);
+            if (user is null)
+            {
+                _logger.LogWarning("Reset password failed: no user found with ID '{UserId}'", request.UserId);
+                return ResultResponse<bool>.Fail("User not found");
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                _logger.LogWarning("Reset password failed for user ID '{UserId}': {Errors}", request.UserId, errors);
+                return ResultResponse<bool>.Fail(errors);
+            }
+
+            _logger.LogInformation("Password reset successfully for user ID '{UserId}'", request.UserId);
+            return ResultResponse<bool>.Ok(true);
+        }
+        
 
         // TOKEN 
         // CREATE JWT TOKEN _________________________________________________________________

@@ -2,6 +2,7 @@
 using aspNet_react_auth.Server.Entities;
 using aspNet_react_auth.Server.Models;
 using aspNet_react_auth.Server.Services;
+using aspNetReactAuth.Server.Models;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -232,6 +233,29 @@ namespace aspNet_react_auth.Server.Controllers
             }
             
             return Ok(new { message = "Password reset link sent to your email" });
+        }
+
+        // RESET PASSWORD ENDPOINT _____________________________________________________________________
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordRequestDto request)
+        {
+            _logger.LogWarning("Reset password request for userId: {UserId}", request.UserId);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ValidationErrorResponse(ModelState));
+            }
+
+            var result = await _authService.ResetPasswordAsync(request);
+            if (!result.Success)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    Message = "Reset password failed",
+                    Details = result.Error
+                });
+            }
+
+            return Ok(new { message = "Password reset successfully" });
         }
     
         // REFRESH TOKEN ENDPOINT _____________________________________________________________________
