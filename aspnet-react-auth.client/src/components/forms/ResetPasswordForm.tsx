@@ -5,9 +5,16 @@ import HoneypotField from "../ui/HoneypotField";
 import type { ResetPasswordError, ResetPasswordRequest, ResetPasswordResponse } from "../../lib/types/auth";
 import handleApiResponse from "../../lib/utils/handleApiResponse";
 import { authService } from "../../services/authService";
+import { useSearchParams } from "react-router-dom";
 
 export default function ResetPasswordForm() {
+    const [searchParams] = useSearchParams();
+    const userId = searchParams.get('userId');
+    const token = searchParams.get('token');
+
     const [formData, setFormData] = useState<ResetPasswordRequest>({
+        userId: userId ?? '',
+        token: token ?? '',
         newPassword: '',
         confirmPassword: '',
         website: '' // Hidden field for honeypot
@@ -33,10 +40,11 @@ export default function ResetPasswordForm() {
         setErrors({});
 
         try {
+            console.log('Submitting reset password form with data:', formData);
             const response = await authService.resetPassword(formData);
 
             await handleApiResponse<ResetPasswordResponse>(
-                ['newPassword', 'confirmPassword'], // Fields to check for backend errors
+                ['userId', 'token', 'newPassword', 'confirmPassword'], // Fields to check for backend errors
                 response,
                 setErrors,
                 setMessage,
@@ -44,6 +52,8 @@ export default function ResetPasswordForm() {
                     if (data) {
                         setMessage(data.message);
                         setFormData({
+                            userId: '',
+                            token: '',
                             newPassword: '',
                             confirmPassword: '',
                             website: ''
@@ -64,6 +74,15 @@ export default function ResetPasswordForm() {
     if (isLoading) {
         return <LoadingSpinner />;
     }
+    
+    if (!userId || !token) {
+        return (
+            <div>
+                <h1>Reset Password</h1>
+                <p>Invalid reset link.</p>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -75,23 +94,31 @@ export default function ResetPasswordForm() {
             <form onSubmit={handleSubmit}>
                 <h2>Reset Password</h2>
                 <div>
-                    <label>New Password:</label>
+                    <label htmlFor="newPassword">New Password:</label>
                     <input
                         type="password"
+                        id="newPassword"
                         name="newPassword"
                         value={formData.newPassword}
                         onChange={handleChange}
+                        disabled={isLoading}
+                        placeholder="Enter your new password"
+                        autoComplete="new-password"
                         required
                     />
                     <FormErrorMessage message={errors?.newPassword} />
                 </div>
                 <div>
-                    <label>Confirm Password:</label>
+                    <label htmlFor="confirmPassword">Confirm Password:</label>
                     <input
                         type="password"
+                        id="confirmPassword"
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleChange}
+                        disabled={isLoading}
+                        placeholder="Confirm your new password"
+                        autoComplete="new-password"
                         required
                     />
                     <FormErrorMessage message={errors?.confirmPassword} />

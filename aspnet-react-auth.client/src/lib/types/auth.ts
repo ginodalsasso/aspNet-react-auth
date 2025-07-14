@@ -57,6 +57,8 @@ export interface ForgotPasswordError {
 }
 
 export interface ResetPasswordError {
+    userId?: string;
+    token?: string;
     newPassword?: string;
     confirmPassword?: string;
 }
@@ -82,6 +84,8 @@ export interface ForgotPasswordRequest extends HoneypotField {
 }
 
 export interface ResetPasswordRequest extends HoneypotField {
+    userId: string;
+    token: string;
     newPassword: string;
     confirmPassword: string;
 }
