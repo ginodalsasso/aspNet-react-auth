@@ -15,6 +15,7 @@ import LoadingSpinner from './components/layout/LoadingSpinner';
 import ConfirmEmail from './pages/ConfirmEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPasswordForm from './components/forms/ResetPasswordForm';
+import Navbar from './components/layout/Navbar';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, loading } = useAuth();
@@ -31,7 +32,6 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, loading } = useAuth();
-    console.log(isAuthenticated)
 
     if (loading) {
         return <LoadingSpinner />;
@@ -46,8 +46,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
     return (
+        
         <AuthProvider>
             <Router>
+                <Navbar/>
                 <Routes>
                     {/* Public routes */}
                     <Route path="/register" element={<PublicRoute> <Register /> </PublicRoute>} />
