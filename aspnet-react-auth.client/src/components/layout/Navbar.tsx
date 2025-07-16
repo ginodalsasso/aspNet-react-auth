@@ -15,30 +15,32 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className={styles.navbar}>
-      <span>
-        <Link to="/">AspNet React Auth</Link>
-      </span>
-      <ul className={styles.links}>
-        {isAuthenticated ? (
-          <>
-            <li>
-              <Link to="/dashboard">Dashboard</Link>
-            </li>
-            <li>
-              <Link onClick={clearAuth}>Logout</Link>
-            </li>
-          </>
-        ) : (
-          <>
-            <li>
-              <Link to="/login">Login</Link>
-            </li>
-            <li>
-              <Link to="/register">Register</Link>
-            </li>
-          </>
-        )}
-      </ul>
+      <div className={styles.container}>
+        <span className={styles.logo}>
+          <Link to="/">AspNet React Auth</Link>
+        </span>
+        <ul className={styles.links}>
+          {isAuthenticated ? (
+            <>
+              <li>
+                <Link to="/dashboard">Dashboard</Link>
+              </li>
+              <li>
+                <Link onClick={clearAuth}>Logout</Link>
+              </li>
+            </>
+          ) : (
+            <>
+              <li>
+                <Link to="/login">Login</Link>
+              </li>
+              <li>
+                <Link to="/register">Register</Link>
+              </li>
+            </>
+          )}
+        </ul>
+      </div>
     </nav>
   );
 };
