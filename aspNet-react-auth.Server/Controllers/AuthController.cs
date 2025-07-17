@@ -220,7 +220,6 @@ namespace aspNet_react_auth.Server.Controllers
             {
                 return BadRequest(new ValidationErrorResponse(ModelState));
             }
-            
             var result = await _authService.ForgotPasswordAsync(request);
             if (!result.Success)
             {
@@ -231,7 +230,6 @@ namespace aspNet_react_auth.Server.Controllers
                     Details = result.Error
                 });
             }
-            
             return Ok(new { message = "Password reset link sent to your email" });
         }
 
@@ -257,7 +255,7 @@ namespace aspNet_react_auth.Server.Controllers
 
             return Ok(new { message = "Password reset successfully" });
         }
-    
+
         // REFRESH TOKEN ENDPOINT _____________________________________________________________________
         [HttpPost("refresh-token")]
         public async Task<ActionResult<object>> RefreshToken()
@@ -297,5 +295,30 @@ namespace aspNet_react_auth.Server.Controllers
                 return Unauthorized(error);
             }
         }
+
+        // TWO-FACTOR AUTHENTICATION REQUEST ENDPOINT _____________________________________________________________________
+        [HttpPost("2fa/verify")]
+        public async Task<ActionResult<TokenResponseDto>> Verify2FACode(TwoFactorRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ValidationErrorResponse(ModelState));
+            }
+
+            var result = await _authService.TwoFactorRequestAsync(request);
+            if (!result.Success)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    Message = "Two-factor authentication failed",
+                    Details = result.Error
+                });
+            }
+
+            Response.Cookies.Append("refreshToken", result.Data!.RefreshToken, _refreshTokenCookieOptions);
+
+            return Ok(new { accessToken = result.Data.AccessToken });
+        }
+
     }
 }

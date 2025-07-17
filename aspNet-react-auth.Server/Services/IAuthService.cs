@@ -20,5 +20,7 @@ namespace aspNet_react_auth.Server.Services
         Task<ResultResponse<bool>> ResetPasswordAsync(ResetPasswordRequestDto request);
         // Creates a JWT token for the user
         Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken);
+        // Sends a two-factor authentication code to the user
+        Task<ResultResponse<TokenResponseDto>> TwoFactorRequestAsync(TwoFactorRequestDto request);
     }
 }

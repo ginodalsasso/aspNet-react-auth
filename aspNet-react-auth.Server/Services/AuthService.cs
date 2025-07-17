@@ -96,6 +96,21 @@ namespace aspNet_react_auth.Server.Services
                 return ResultResponse<TokenResponseDto>.Fail("Invalid credentials");
             }
 
+            if (user.TwoFactorEnabled)
+            {
+                var token = await _userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
+                if (string.IsNullOrEmpty(token))
+                {
+                    _logger.LogError("Failed to generate 2FA token for user '{Username}'", user.UserName);
+                    return ResultResponse<TokenResponseDto>.Fail("Failed to generate 2FA token");
+                }
+
+                await _emailService.SendEmailAsync(user.Email!, "Two-Factor Authentication Code",
+                    $"Your two-factor authentication code is: {token}. Please enter this code to complete your login.");
+
+                return ResultResponse<TokenResponseDto>.Fail("2FA Required. A verification code has been sent to your email.");
+            }
+
             TokenResponseDto response = await CreateTokenResponse(user);
 
             return ResultResponse<TokenResponseDto>.Ok(response);
@@ -285,7 +300,28 @@ namespace aspNet_react_auth.Server.Services
             _logger.LogInformation("Password reset successfully for user ID '{UserId}'", request.UserId);
             return ResultResponse<bool>.Ok(true);
         }
-        
+
+        // TWO-FACTOR AUTHENTICATION REQUEST ASYNC _________________________________________________________________
+        public async Task<ResultResponse<TokenResponseDto>> TwoFactorRequestAsync(TwoFactorRequestDto request)
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user is null)
+            {
+                _logger.LogWarning("Two-factor authentication failed: no user found with email '{Email}'", request.Email);
+                return ResultResponse<TokenResponseDto>.Fail("User not found");
+            }
+
+            var isValid = await _userManager.VerifyTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider, request.Token);
+            if (!isValid)
+            {
+                _logger.LogWarning("Two-factor authentication failed: invalid token for user '{Email}'", request.Email);
+                return ResultResponse<TokenResponseDto>.Fail("Invalid two-factor authentication token");
+            }
+
+            TokenResponseDto response = await CreateTokenResponse(user);
+
+            return ResultResponse<TokenResponseDto>.Ok(response);
+        }
 
         // TOKEN 
         // CREATE JWT TOKEN _________________________________________________________________
