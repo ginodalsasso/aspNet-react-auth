@@ -304,17 +304,17 @@ namespace aspNet_react_auth.Server.Services
         // TWO-FACTOR AUTHENTICATION REQUEST ASYNC _________________________________________________________________
         public async Task<ResultResponse<TokenResponseDto>> TwoFactorRequestAsync(TwoFactorRequestDto request)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email);
+            var user = await _userManager.FindByNameAsync(request.Username);
             if (user is null)
             {
-                _logger.LogWarning("Two-factor authentication failed: no user found with email '{Email}'", request.Email);
+                _logger.LogWarning("Two-factor authentication failed: no user found with username '{Username}'", request.Username);
                 return ResultResponse<TokenResponseDto>.Fail("User not found");
             }
 
             var isValid = await _userManager.VerifyTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider, request.Token);
             if (!isValid)
             {
-                _logger.LogWarning("Two-factor authentication failed: invalid token for user '{Email}'", request.Email);
+                _logger.LogWarning("Two-factor authentication failed: invalid token for user '{Username}'", request.Username);
                 return ResultResponse<TokenResponseDto>.Fail("Invalid two-factor authentication token");
             }
 

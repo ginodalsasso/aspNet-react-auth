@@ -5,9 +5,10 @@ namespace aspNet_react_auth.Server.Models
     public class TwoFactorRequestDto
     {
         [Required]
-        [EmailAddress(ErrorMessage = "Invalid email address format.")]
-        [StringLength(256, ErrorMessage = "Email address cannot exceed 256 characters.")]
-        public required string Email { get; set; }
+        [StringLength(20, MinimumLength = 3)]
+        [RegularExpression("^[a-zA-Z0-9_]+$",
+        ErrorMessage = "Username is invalid")] // require alphanumeric characters and underscores only
+        public string Username { get; set; } = string.Empty;
 
         [Required]
         [StringLength(6, ErrorMessage = "Token must be exactly 6 characters long.", MinimumLength = 6)]
