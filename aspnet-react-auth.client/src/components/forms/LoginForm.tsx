@@ -37,41 +37,45 @@ export default function LoginForm() {
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
+        
         setIsLoading(true);
         setMessage('');
         setErrors({});
 
         try {
             const response = await authService.login(formData);
+            const result = await response.json();
 
-            await handleApiResponse<TokenResponse>(
-                ['username', 'password'], // Fields to check for backend errors
-                response,
-                setErrors,
-                setMessage,
-                (tokenData) => {
-                    // Success handler
-                    const user = parseJWT(tokenData.accessToken);
-
-                    if (user) {
-                        // Save tokens to localStorage
-                        setAccessToken(tokenData.accessToken);
-                        setMessage('Login successful!');
-                        setFormData({
-                            username: '',
-                            password: '',
-                            website: '' 
-                        });
-
-                        if (response.ok) {
-                            setTimeout(() => navigate('/'), 1500); // Redirect after 1.5 seconds
-                        }
-                    } else {
-                        setMessage('Error processing login response');
-                    }
+            if (!response.ok) {
+                const is2FA = result.details?.includes('2FA');
+                if (is2FA) {
+                    navigate('/2fa', { state: { username: formData.username } }); // Pass the username to the 2FA page
+                    return;
                 }
-            );
+
+                await handleApiResponse<TokenResponse>(
+                    ['username', 'password'], // Fields to check for backend errors
+                    response,
+                    setErrors,
+                    setMessage,
+                    () => {}
+                );
+                return;
+            }
+
+            const user = parseJWT(result.accessToken);
+            if (user) {
+                setAccessToken(result.accessToken);
+                setMessage('Login successful!');
+                setFormData({
+                    username: '', 
+                    password: '', 
+                    website: '' 
+                });
+                setTimeout(() => navigate('/'), 1500);
+            } else {
+                setMessage('Error processing login response');
+            }
         } catch (error) {
             console.error('Network error:', error);
             setMessage('Internal server error');
