@@ -297,7 +297,7 @@ namespace aspNet_react_auth.Server.Controllers
         }
 
         // TWO-FACTOR AUTHENTICATION REQUEST ENDPOINT _____________________________________________________________________
-        [HttpPost("2fa/verify")]
+        [HttpPost("2fa-verify")]
         public async Task<ActionResult<TokenResponseDto>> Verify2FACode(TwoFactorRequestDto request)
         {
             if (!ModelState.IsValid)

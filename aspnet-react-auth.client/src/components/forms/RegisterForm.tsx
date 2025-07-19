@@ -72,7 +72,7 @@ export default function RegisterForm() {
     }
 
     return (
-        <div>
+        <>
             {message && (
                 <div>
                     {message}
@@ -139,6 +139,6 @@ export default function RegisterForm() {
                     {isLoading ? 'Loading' : 'Register'}
                 </button>
             </form>
-        </div>
+        </>
     );
 }

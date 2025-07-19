@@ -40,7 +40,6 @@ export default function ResetPasswordForm() {
         setErrors({});
 
         try {
-            console.log('Submitting reset password form with data:', formData);
             const response = await authService.resetPassword(formData);
 
             await handleApiResponse<ResetPasswordResponse>(
@@ -85,7 +84,7 @@ export default function ResetPasswordForm() {
     }
 
     return (
-        <div>
+        <>
             {message && (
                 <div>
                     {message}
@@ -129,6 +128,6 @@ export default function ResetPasswordForm() {
                     {isLoading ? ' Loading...' : 'Reset Password'}
                 </button>
             </form>
-        </div>
+        </>
     );
 }

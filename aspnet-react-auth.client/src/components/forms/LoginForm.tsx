@@ -9,7 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../layout/LoadingSpinner';
 import HoneypotField from '../ui/HoneypotField';
 
-export default function LoginForm() {
+export function LoginForm({ on2FA }: { on2FA: (username: string) => void }) {
     const [formData, setFormData] = useState<LoginRequest>({
         username: '',
         password: '',
@@ -49,7 +49,7 @@ export default function LoginForm() {
             if (!response.ok) {
                 const is2FA = result.details?.includes('2FA');
                 if (is2FA) {
-                    navigate('/2fa', { state: { username: formData.username } }); // Pass the username to the 2FA page
+                    on2FA(formData.username); // ➜ pas de navigation !
                     return;
                 }
 
@@ -89,12 +89,8 @@ export default function LoginForm() {
     }
 
     return (
-        <div>
-            {message && (
-                <div>
-                    {message}
-                </div>
-            )}
+        <>
+            {message && <p>{message}</p>}
 
             <form onSubmit={handleSubmit}>
                 <div>
@@ -138,6 +134,6 @@ export default function LoginForm() {
                 </button>
             </form>
             <Link to="/forgot-password">Forgot password?</Link>
-        </div>
+        </>
     );
 }

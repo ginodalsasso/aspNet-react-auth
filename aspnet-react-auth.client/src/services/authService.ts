@@ -215,6 +215,23 @@ export class AuthService {
         }
     }
 
+    async verify2FA(data: { username: string; token: string }): Promise<Response> {
+        try {
+            const response = await fetch(`${API_ROUTES.auth.verify2FA}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            return response;
+        } catch (error) {
+            console.error('2FA verification error:', error);
+            return this.responseError();
+        }
+    }
 
     // Protected routes using makeAuthenticatedRequest
     async testProtectedRoute(): Promise<Response> {

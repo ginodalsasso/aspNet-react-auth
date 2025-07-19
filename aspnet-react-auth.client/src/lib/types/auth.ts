@@ -119,3 +119,8 @@ export interface ForgotPasswordResponse {
 export interface ResetPasswordResponse {
     message: string;
 }
+
+export interface TwoFactorResponse {
+    message: string;
+    accessToken?: string;
+}

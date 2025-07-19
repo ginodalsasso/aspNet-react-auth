@@ -67,7 +67,7 @@ export default function ForgotPasswordForm() {
     }
 
     return (
-        <div>
+        <>
             {message && (
                 <div>
                     {message}
@@ -93,6 +93,6 @@ export default function ForgotPasswordForm() {
                     {isLoading ? ' Loading...' : 'Reset Password'}
                 </button>
             </form>
-        </div>
+        </>
     );
 }
