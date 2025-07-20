@@ -98,22 +98,27 @@ namespace aspNet_react_auth.Server.Services
 
             if (user.TwoFactorEnabled)
             {
-                var token = await _userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
-                if (string.IsNullOrEmpty(token))
-                {
-                    _logger.LogError("Failed to generate 2FA token for user '{Username}'", user.UserName);
-                    return ResultResponse<TokenResponseDto>.Fail("Failed to generate 2FA token");
-                }
-
-                await _emailService.SendEmailAsync(user.Email!, "Two-Factor Authentication Code",
-                    $"Your two-factor authentication code is: {token}. Please enter this code to complete your login.");
-
-                return ResultResponse<TokenResponseDto>.Fail("2FA Required. A verification code has been sent to your email.");
+                await SendTwoFactorCodeAsync(user);
             }
 
             TokenResponseDto response = await CreateTokenResponse(user);
 
             return ResultResponse<TokenResponseDto>.Ok(response);
+        }
+
+        private async Task<ResultResponse<TokenResponseDto>> SendTwoFactorCodeAsync(User user)
+        {
+            var token = await _userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
+            if (string.IsNullOrEmpty(token))
+            {
+                _logger.LogError("Failed to generate 2FA token for user '{Username}'", user.UserName);
+                return ResultResponse<TokenResponseDto>.Fail("Failed to generate 2FA token");
+            }
+
+            await _emailService.SendEmailAsync(user.Email!, "Two-Factor Authentication Code",
+                $"Your two-factor authentication code is: {token}. Please enter this code to complete your login.");
+
+            return ResultResponse<TokenResponseDto>.Fail("2FA Required. A verification code has been sent to your email.");
         }
 
         // REGISTER ASYNC _________________________________________________________________
