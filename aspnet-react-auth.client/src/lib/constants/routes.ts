@@ -19,6 +19,7 @@ const authRoutes = {
     forgotPassword: `${authBase}/forgot-password`,
     resetPassword: `${authBase}/reset-password`,
     verify2FA: `${authBase}/2fa-verify`,
+    toggle2FA: `${authBase}/toggle-2fa`,
 
     // test
     testProtectedRoute: `${authBase}/test-protected-route`,

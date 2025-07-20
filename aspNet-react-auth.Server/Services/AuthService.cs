@@ -336,26 +336,25 @@ namespace aspNet_react_auth.Server.Services
             return ResultResponse<TokenResponseDto>.Fail("2FA Required. A verification code has been sent to your email.");
         }
 
-        // ENABLE TWO-FACTOR AUTHENTICATION ASYNC _________________________________________________________________
-        public async Task<ResultResponse<bool>> EnableTwoFactorAuthenticationAsync(string userId)
+        // TOGGLE TWO-FACTOR AUTHENTICATION ASYNC _________________________________________________________________
+        public async Task<ResultResponse<bool>> ToggleTwoFactorAuthenticationAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
             {
-                _logger.LogWarning("Failed to enable 2FA: no user found with ID '{UserId}'", userId);
+                _logger.LogWarning("Failed to toggle 2FA: no user found with ID '{UserId}'", userId);
                 return ResultResponse<bool>.Fail("User not found");
             }
 
-            user.TwoFactorEnabled = true;
+            user.TwoFactorEnabled = !user.TwoFactorEnabled; // Toggle ON/OFF
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
-                _logger.LogError("Failed to enable 2FA for user '{UserId}': {Errors}", userId, result.Errors);
-                return ResultResponse<bool>.Fail("Failed to enable two-factor authentication");
+                _logger.LogError("Failed to toggle 2FA for user '{UserId}': {Errors}", userId, result.Errors);
+                return ResultResponse<bool>.Fail("Failed to toggle two-factor authentication");
             }
 
-            _logger.LogInformation("Two-factor authentication enabled for user ID '{UserId}'", userId);
-            return ResultResponse<bool>.Ok(true);
+            return ResultResponse<bool>.Ok(user.TwoFactorEnabled);
         }
 
         // =======================

@@ -233,6 +233,19 @@ export class AuthService {
         }
     }
 
+    async toggle2FA(userId: string): Promise<Response> {
+        try {
+            const response = await this.makeAuthenticatedRequest(`${API_ROUTES.auth.toggle2FA}`, {
+                method: 'POST',
+                body: JSON.stringify({ userId }),
+            });
+            return response;
+        } catch (error) {
+            console.error('Toggle 2FA error:', error);
+            return this.responseError();
+        }
+    }
+
     // Protected routes using makeAuthenticatedRequest
     async testProtectedRoute(): Promise<Response> {
         return this.makeAuthenticatedRequest(`${API_ROUTES.auth.testProtectedRoute}`, {
