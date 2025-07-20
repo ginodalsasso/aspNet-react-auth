@@ -150,8 +150,10 @@ namespace aspNet_react_auth.Server.Controllers
         public async Task<IActionResult> Logout()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("userId")?.Value;
-            _logger.LogInformation("Logout attempt for user: {UserId}", userId);
-
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User not authenticated");
+            }
             try
             {
                 // Get refresh token from cookie
@@ -320,5 +322,28 @@ namespace aspNet_react_auth.Server.Controllers
             return Ok(new { accessToken = result.Data.AccessToken });
         }
 
+        // ENABLE TWO-FACTOR AUTHENTICATION ENDPOINT _____________________________________________________________________
+        [Authorize]
+        [HttpPost("enable-2fa")]
+        public async Task<IActionResult> EnableTwoFactorAuthentication()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("userId")?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User not authenticated");
+            }
+
+            var result = await _authService.EnableTwoFactorAuthenticationAsync(userId);
+            if (!result.Success)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    Message = "Enabling two-factor authentication failed",
+                    Details = result.Error
+                });
+            }
+
+            return Ok(new { message = "Two-factor authentication enabled successfully" });
+        }
     }
 }

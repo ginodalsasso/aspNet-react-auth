@@ -22,5 +22,7 @@ namespace aspNet_react_auth.Server.Services
         Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken);
         // Sends a two-factor authentication code to the user
         Task<ResultResponse<TokenResponseDto>> TwoFactorRequestAsync(TwoFactorRequestDto request);
+        // Enables two-factor authentication for the user
+        Task<ResultResponse<bool>> EnableTwoFactorAuthenticationAsync(string userId);
     }
 }

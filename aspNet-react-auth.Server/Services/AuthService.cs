@@ -66,6 +66,9 @@ namespace aspNet_react_auth.Server.Services
             }
         }
 
+        // =======================
+        // AUTHENTICATION
+        // =======================
         // LOGIN ASYNC _________________________________________________________________
         public async Task<ResultResponse<TokenResponseDto>> LoginAsync(LoginRequestDto request) // Authenticates the user and returns a JWT token
         {
@@ -104,21 +107,6 @@ namespace aspNet_react_auth.Server.Services
             TokenResponseDto response = await CreateTokenResponse(user);
 
             return ResultResponse<TokenResponseDto>.Ok(response);
-        }
-
-        private async Task<ResultResponse<TokenResponseDto>> SendTwoFactorCodeAsync(User user)
-        {
-            var token = await _userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
-            if (string.IsNullOrEmpty(token))
-            {
-                _logger.LogError("Failed to generate 2FA token for user '{Username}'", user.UserName);
-                return ResultResponse<TokenResponseDto>.Fail("Failed to generate 2FA token");
-            }
-
-            await _emailService.SendEmailAsync(user.Email!, "Two-Factor Authentication Code",
-                $"Your two-factor authentication code is: {token}. Please enter this code to complete your login.");
-
-            return ResultResponse<TokenResponseDto>.Fail("2FA Required. A verification code has been sent to your email.");
         }
 
         // REGISTER ASYNC _________________________________________________________________
@@ -178,7 +166,7 @@ namespace aspNet_react_auth.Server.Services
             return ResultResponse<bool>.Ok(true);
         }
 
-        // CONFIRM EMAIL ASYNC _________________________________________________________________
+        // CONFIRM EMAIL ASYNC ________________________________________________________________
         public async Task<bool> ConfirmEmailAsync(ConfirmEmailRequestDto request) // Confirms the user's email
         {
             _logger.LogInformation("ConfirmEmailAsync {request}", request);
@@ -306,6 +294,10 @@ namespace aspNet_react_auth.Server.Services
             return ResultResponse<bool>.Ok(true);
         }
 
+
+        // =======================
+        // 2FA AUTHENTICATION 
+        // =======================
         // TWO-FACTOR AUTHENTICATION REQUEST ASYNC _________________________________________________________________
         public async Task<ResultResponse<TokenResponseDto>> TwoFactorRequestAsync(TwoFactorRequestDto request)
         {
@@ -328,7 +320,47 @@ namespace aspNet_react_auth.Server.Services
             return ResultResponse<TokenResponseDto>.Ok(response);
         }
 
-        // TOKEN 
+        // SEND TWO-FACTOR CODE ASYNC _________________________________________________________________
+        private async Task<ResultResponse<TokenResponseDto>> SendTwoFactorCodeAsync(User user)
+        {
+            var token = await _userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
+            if (string.IsNullOrEmpty(token))
+            {
+                _logger.LogError("Failed to generate 2FA token for user '{Username}'", user.UserName);
+                return ResultResponse<TokenResponseDto>.Fail("Failed to generate 2FA token");
+            }
+
+            await _emailService.SendEmailAsync(user.Email!, "Two-Factor Authentication Code",
+                $"Your two-factor authentication code is: {token}. Please enter this code to complete your login.");
+
+            return ResultResponse<TokenResponseDto>.Fail("2FA Required. A verification code has been sent to your email.");
+        }
+
+        // ENABLE TWO-FACTOR AUTHENTICATION ASYNC _________________________________________________________________
+        public async Task<ResultResponse<bool>> EnableTwoFactorAuthenticationAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null)
+            {
+                _logger.LogWarning("Failed to enable 2FA: no user found with ID '{UserId}'", userId);
+                return ResultResponse<bool>.Fail("User not found");
+            }
+
+            user.TwoFactorEnabled = true;
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                _logger.LogError("Failed to enable 2FA for user '{UserId}': {Errors}", userId, result.Errors);
+                return ResultResponse<bool>.Fail("Failed to enable two-factor authentication");
+            }
+
+            _logger.LogInformation("Two-factor authentication enabled for user ID '{UserId}'", userId);
+            return ResultResponse<bool>.Ok(true);
+        }
+
+        // =======================
+        // TOKEN
+        // =======================
         // CREATE JWT TOKEN _________________________________________________________________
         private JwtSecurityToken CreateJwtToken(List<Claim> claims, TimeSpan validityDuration, SigningCredentials credentials)
         {
