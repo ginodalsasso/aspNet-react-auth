@@ -104,6 +104,12 @@ namespace aspNet_react_auth.Server.Services
                 await SendTwoFactorCodeAsync(user);
             }
 
+            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
+            {
+                _logger.LogWarning("Login failed: user '{Username}' is locked out until {LockoutEnd}", user.UserName, user.LockoutEnd);
+                return ResultResponse<TokenResponseDto>.Fail($"Locked out until {user.LockoutEnd}");
+            }
+
             TokenResponseDto response = await CreateTokenResponse(user);
 
             return ResultResponse<TokenResponseDto>.Ok(response);
