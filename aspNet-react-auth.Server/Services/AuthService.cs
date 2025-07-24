@@ -41,7 +41,7 @@ namespace aspNet_react_auth.Server.Services
             _rsa = rsa;
             _logger = logger;
         }
-        
+
         // PROCESS USER EMAIL ASYNC _________________________________________________________________
         private async Task ProcessUserEmailAsync(User user, Func<User, Task<string>> generateTokenAsync, string redirectPath, Func<string, string, Task> sendEmailAsync)
         {
@@ -407,7 +407,7 @@ namespace aspNet_react_auth.Server.Services
             {
                 claims.Add(new Claim("role", user.Role));
             }
-            
+
             // Create a symmetric security key using the secret key from configuration
             var key = new RsaSecurityKey(_rsa);
 
@@ -490,6 +490,53 @@ namespace aspNet_react_auth.Server.Services
                 return null;
             }
 
+            return await CreateTokenResponse(user);
+        }
+
+        // GOOGLE LOGIN ASYNC _________________________________________________________________
+        public async Task<TokenResponseDto> GoogleLoginAsync(ExternalLoginInfo externalLoginInfo)
+        {
+            if (externalLoginInfo == null)
+            {
+                _logger.LogError("HandleGoogleLoginAsync failed: ExternalLoginInfo is null");
+                throw new ArgumentNullException(nameof(externalLoginInfo));
+            }
+
+            var user = await _userManager.FindByLoginAsync(externalLoginInfo.LoginProvider, externalLoginInfo.ProviderKey);
+
+            if (user == null)
+            {
+                var email = externalLoginInfo.Principal.FindFirstValue(ClaimTypes.Email);
+
+                if (!string.IsNullOrEmpty(email)) // Check if email is available
+                {
+                    user = await _userManager.FindByEmailAsync(email);
+                    if (user == null)
+                    {
+                        user = new User // Create a new user if not found
+                        {
+                            UserName = email,
+                            Email = email,
+                            EmailConfirmed = true,
+                            TwoFactorEnabled = false,
+                            Role = "User"
+                        };
+                        var result = await _userManager.CreateAsync(user);
+                        if (!result.Succeeded)
+                        {
+                            _logger.LogError("Error creating Google user: {Errors}", string.Join(", ", result.Errors.Select(e => e.Description)));
+                            throw new Exception("Error creating Google user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+                        }
+                    }
+                    
+                    await _userManager.AddLoginAsync(user, externalLoginInfo);
+                }
+                else
+                {
+                    _logger.LogWarning("Google login failed: no email claim found");
+                    throw new Exception("Google login failed: no email claim found");
+                }
+            }
             return await CreateTokenResponse(user);
         }
     }

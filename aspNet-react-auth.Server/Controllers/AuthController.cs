@@ -350,5 +350,52 @@ namespace aspNet_react_auth.Server.Controllers
 
             return Ok(new { message });
         }
+
+        // GOOGLE AUTHENTICATION ENDPOINT _____________________________________________________________________
+        [AllowAnonymous]
+        [HttpGet("signin-google")]
+        public IActionResult GoogleLogin(string returnUrl = "/")
+        {
+            var redirectUrl = Url.Action("GoogleResponse", "Auth", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
+            return Challenge(properties, "Google");
+        }
+
+        [AllowAnonymous]
+        [HttpGet("google-response")]
+        public async Task<IActionResult> GoogleResponse(string returnUrl = "/")
+        {
+            var externalLoginInfo = await _signInManager.GetExternalLoginInfoAsync();
+            if (externalLoginInfo == null)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    Message = "Google login failed",
+                    Details = "External login info not found"
+                });
+            }
+
+            try
+            {
+                var tokenResponse = await _authService.GoogleLoginAsync(externalLoginInfo);
+                if (tokenResponse == null)
+                {
+                    _logger.LogWarning("Google login failed: no token response");
+                    return Unauthorized("Google login failed: no token response");
+                }
+
+                // Set the refresh token in the cookie
+                Response.Cookies.Append("refreshToken", tokenResponse.RefreshToken, _refreshTokenCookieOptions);
+
+                return Redirect($"{returnUrl}?success=1");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Google login error");
+                return Redirect($"{returnUrl}?error=GoogleLoginFailed");
+            }
+
+        }
     }
+
 }

@@ -1,6 +1,7 @@
 ﻿using aspNet_react_auth.Server.Common;
 using aspNet_react_auth.Server.Models;
 using aspNetReactAuth.Server.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace aspNet_react_auth.Server.Services
 {
@@ -24,5 +25,7 @@ namespace aspNet_react_auth.Server.Services
         Task<ResultResponse<TokenResponseDto>> TwoFactorRequestAsync(TwoFactorRequestDto request);
         // Toggles two-factor authentication for the user
         Task<ResultResponse<bool>> ToggleTwoFactorAuthenticationAsync(string userId);
+        // Handles Google login and returns a JWT token
+        Task<TokenResponseDto> GoogleLoginAsync(ExternalLoginInfo externalLoginInfo);
     }
 }

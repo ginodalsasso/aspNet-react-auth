@@ -1,8 +1,9 @@
-
 const devURL = "https://localhost:7067";
+const clientURL = "https://localhost:24233";
 const prodURL = ""
 const API_BASE_URL = devURL ? devURL : prodURL; // if devURL is set, use it; otherwise use prodURL
 
+export const CLIENT_URL = clientURL;
 export const API_URL = `${API_BASE_URL}`;
 export const BASE_URL = `${API_BASE_URL}/api`;
 
@@ -20,6 +21,7 @@ const authRoutes = {
     resetPassword: `${authBase}/reset-password`,
     verify2FA: `${authBase}/2fa-verify`,
     toggle2FA: `${authBase}/toggle-2fa`,
+    googleLogin: `${authBase}/signin-google`,
 
     // test
     testProtectedRoute: `${authBase}/test-protected-route`,
