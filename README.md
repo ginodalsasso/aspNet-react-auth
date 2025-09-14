@@ -35,35 +35,14 @@
 
 ---
 
-## Two-Factor Authentication (2FA)
-
-### Overview
-The solution implements two-factor authentication (2FA) using the TOTP (Time-based One-Time Password) protocol. This method adds an extra layer of security by requiring a one-time code in addition to the password.
-
-### Features
-- **Easy Setup**: QR code for quick configuration with authenticator apps
-- **Compatible Apps**: Google Authenticator, Microsoft Authenticator, Authy, etc.
-- **Backup Codes**: Generation of recovery codes for emergency access
-- **Toggle Capability**: Users can enable/disable 2FA at any time
-- **Persistent State**: 2FA status is remembered across sessions
-
-### Authentication Flow
-1. User logs in with email/password
-2. If 2FA is enabled, user is redirected to 2FA verification screen
-3. User enters the 6-digit code from their authenticator app
-4. Once verified, full access is granted
-
-### Initial Setup
-1. Navigate to your account security settings
-2. Click on "Enable 2FA"
-3. Scan the QR code with your authenticator app
-4. Enter the generated code to confirm setup
-5. Store backup codes in a secure location
-
----
-
 ## Objectives
 
-- Provide a minimal yet secure authentication system using modern standards (JWT, RSA).
-- Enable secure frontend/backend communication with cookie + token handling.
-- Serve as a clean starting point for fullstack apps requiring protected APIs.
+- Implement a comprehensive authentication system using modern security standards (JWT, RSA).
+- Provide multiple authentication methods including email/password, social login, and 2FA.
+- Ensure secure frontend/backend communication with cookie handling and CSRF protection.
+- Maintain high security standards with features like email verification and strong password policies.
+- Enable flexible access control through role-based authorization.
+- Implement secure session management with refresh tokens and secure logout.
+- Provide comprehensive error handling and user feedback.
+- Ensure system observability through structured logging.
+- Create an extensible foundation for building secure fullstack applications.
