@@ -10,13 +10,17 @@
 
 - **JWT Authentication**: Stateless access tokens with short lifespan, RSA-signed for security.
 - **Refresh Tokens**: Automatically renews access tokens using secure HttpOnly cookies.
+- **2FA**: Two-factor authentication with TOTP and email options.
+- **Social Login**: Sign in with Google authentication integration.
 - **CSRF Protection**: Built-in anti-forgery token system for cookie-based routes.
-- **Email Confirmation**: New users must verify their email before logging in.
+- **Email Confirmation**: New users must verify their email before logging in and forgotten password.
 - **Role-Based Authorization**: Easily restrict access to routes (`User`, `Admin`).
 - **Secure Logout**: Tokens are invalidated and removed from the database.
-- **Frontend Integration**: React client with Axios and CSRF-aware requests.
+- **Frontend Integration**: React client and CSRF-aware requests.
 - **Form Validation**: Enforces strong password policies and input formats.
 - **Extensible**: Add your own domain logic, UI components, or data models easily.
+- **Error Handling**: Comprehensive error messaging and user feedback.
+- **Logging**: Structured logging with Serilog integration.
 
 ---
 
@@ -28,6 +32,33 @@
 - **Database**: Entity Framework Core (SQL Server)
 - **Email**: SMTP for account confirmation
 - **Security**: CSRF, HttpOnly cookies, SameSite policies
+
+---
+
+## Two-Factor Authentication (2FA)
+
+### Overview
+The solution implements two-factor authentication (2FA) using the TOTP (Time-based One-Time Password) protocol. This method adds an extra layer of security by requiring a one-time code in addition to the password.
+
+### Features
+- **Easy Setup**: QR code for quick configuration with authenticator apps
+- **Compatible Apps**: Google Authenticator, Microsoft Authenticator, Authy, etc.
+- **Backup Codes**: Generation of recovery codes for emergency access
+- **Toggle Capability**: Users can enable/disable 2FA at any time
+- **Persistent State**: 2FA status is remembered across sessions
+
+### Authentication Flow
+1. User logs in with email/password
+2. If 2FA is enabled, user is redirected to 2FA verification screen
+3. User enters the 6-digit code from their authenticator app
+4. Once verified, full access is granted
+
+### Initial Setup
+1. Navigate to your account security settings
+2. Click on "Enable 2FA"
+3. Scan the QR code with your authenticator app
+4. Enter the generated code to confirm setup
+5. Store backup codes in a secure location
 
 ---
 
